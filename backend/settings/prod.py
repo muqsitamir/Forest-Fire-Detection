@@ -132,10 +132,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'wwf_lums',
-        'USER': 'wwfcvglab',
-        'PASSWORD': '4ml6SXSB6e$X',
-        'HOST': '172.105.121.154',
+        'NAME': 'forest_fire',
+        'USER': 'root',
+        'PASSWORD': 'fif_607_taj',
+        'HOST': '139.162.11.234',
         'PORT': '3306',
     }
 }
