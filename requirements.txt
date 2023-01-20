@@ -2,7 +2,6 @@ django==3.2
 djangorestframework==3.12.2
 fcm-django==0.3.7
 opencv-python
-mysqlclient
 Pillow==8.4.0
 djoser==2.1.0
 django-webpack-loader==1.0.0
