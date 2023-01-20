@@ -1,0 +1,15 @@
+# Project exclude paths
+/venv/
+/.idea/
+/__pycache__/__init__.cpython-37.pyc
+*.pyc
+*.csv
+media
+db.sqlite3
+package-lock.json
+/backend/settings/dev/
+/backend/settings/dev.py
+/assets/dist/
+/webpack-stats.json
+wwf_lums_backup*.sql
+
