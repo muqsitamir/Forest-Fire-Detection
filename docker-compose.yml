@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  django-app:
+    image: nginx-uwsgi-django
+    restart: always
+    container_name: django
+    command: bash -c "service nginx start && uwsgi --ini /etc/uwsgi/wwf.ini && tail -f /dev/null"
+    ports:
+      - '8000:8000'
+    working_dir: /wwf_snow_leopard
+    volumes:
+      - .:/wwf_snow_leopard
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: arbisoft
+      MYSQL_DB: wwf_lums
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    container_name: mysql
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: arbisoft
+      MYSQL_DATABASE: wwf_lums
+
+volumes:
+  mysql-data:

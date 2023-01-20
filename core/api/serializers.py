@@ -1,0 +1,110 @@
+from rest_framework import serializers
+
+from accounts.models import Organization
+from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event
+
+
+class SpecieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Specie
+        fields = "__all__"
+
+
+class BoxSerializer(serializers.ModelSerializer):
+    specie = SpecieSerializer(read_only=True)
+    image_date = serializers.DateTimeField(source='image.date', read_only=True)
+
+    class Meta:
+        model = BoundingBox
+        fields = "__all__"
+
+
+class EventSerializer(serializers.ModelSerializer):
+    species = SpecieSerializer(read_only=True, many=True)
+    created_at = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
+    date = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
+    camera_name = serializers.CharField(source='camera.description', read_only=True)
+
+    class Meta:
+        model = Event
+        fields = '__all__'
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    boundingbox_set = BoxSerializer(read_only=True, many=True)
+    uuid = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Image
+        fields = '__all__'
+
+    def validate(self, attrs):
+        attrs['camera'] = self.context['request'].user.camera
+        event, _ = Event.objects.get_or_create(uuid=attrs.pop('uuid'), defaults={'date': attrs['date'], 'camera': attrs['camera']})
+
+        if event.date > attrs['date']:
+            event.date = attrs['date']
+
+        event.save()
+        attrs['event'] = event
+        return attrs
+
+
+class SlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Slot
+        fields = '__all__'
+
+
+class CameraSerializer(serializers.ModelSerializer):
+    slots = SlotSerializer(many=True, read_only=True)
+    last_captured_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Camera
+        fields = '__all__'
+
+
+class CameraListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Camera
+        fields = ('id', 'test', 'live', 'should_log', 'description', 'created_at', 'last_reported_at', 'remaining_storage')
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    cameras = serializers.SerializerMethodField(read_only=True)
+    species = SpecieSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Organization
+        fields = "__all__"
+
+    def get_cameras(self, instance):
+        if self.context['request'].user.is_superuser:
+            return CameraListSerializer(Camera.objects.all(), many=True).data
+        qs = Camera.objects.filter(organization=instance)
+        return CameraListSerializer(qs, many=True).data
+
+
+class ReadingSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reading
+        fields = '__all__'
+
+    def validate(self, attrs):
+        attrs['camera'] = self.context['request'].user.camera
+        return attrs
+
+
+class LogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Log
+        fields = "__all__"
+
+    def validate(self, attrs):
+        attrs['camera'] = self.context['request'].user.camera
+        return attrs
