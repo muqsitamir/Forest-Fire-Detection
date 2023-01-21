@@ -15,6 +15,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django_filters.widgets import CSVWidget
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -24,6 +25,12 @@ from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerialize
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer
 from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event
 from core.notifications import send_push_notification
+
+
+class DynamicPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 20
 
 
 class ImageFilterSet(filters.FilterSet):
@@ -53,10 +60,10 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = EventFilterSet
+    pagination_class = DynamicPagination
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
-
         if not self.request.user.is_superuser:
             # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
             qs = qs.filter(Q(species="vehicle") | Q(species="animal") | Q(species="person")).filter(
@@ -76,6 +83,31 @@ class EventViewSet(viewsets.ModelViewSet):
         events = Event.objects.filter(uuid__in=archived)
         events.update(status=Event.ARCHIVED)
         return Response({'message': 'Events Updated'}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def annotate_species(self, request, *args, **kwargs):
+        species = request.data.get('species', [])
+        species_to_annotate = Specie.objects.filter(id__in=species)
+        events_to_edit = request.data.get('events', [])
+        for event in Event.objects.filter(uuid__in=events_to_edit):
+            event.species.add(*species_to_annotate)
+        return Response({'message': 'Species annotated to events'}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def remove_species(self, request, *args, **kwargs):
+        species = request.data.get('species', [])
+        species = Specie.objects.filter(id__in=species)
+        events_to_edit = request.data.get('events', [])
+        for event in Event.objects.filter(uuid__in=events_to_edit):
+            event.species.remove(*species)
+        return Response({'message': 'Removed species from events'}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def delete_events(self, request, *args, **kwargs):
+        events = request.data.get('events', [])
+        events = Event.objects.filter(uuid__in=events)
+        events.delete()
+        return Response({'message': 'Deleted events'}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=True)
     def notify(self, request, *args, **kwargs):
