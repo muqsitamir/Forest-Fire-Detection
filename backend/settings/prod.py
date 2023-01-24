@@ -212,4 +212,4 @@ WEBPACK_LOADER = {
     }
 }
 
-MODEL_SERVICE_URL = 'http://203.135.63.37:5000/'
+MODEL_SERVICE_URL = 'http://using_fake_url_until_service_setup/'
