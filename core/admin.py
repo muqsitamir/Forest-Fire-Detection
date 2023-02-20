@@ -41,7 +41,7 @@ class CameraAdmin(admin.ModelAdmin):
     actions = ['turn_logging_on', 'turn_logging_off', 'start_capture', 'stop_capturing']
 
     fieldsets = [
-        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization']}),
+        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower']}),
         ('Stats', {'fields': ['last_reported_at', 'remaining_storage']}),
         ('Capture Settings', {'fields': ['frames_per_sec', 'image_width', 'image_height', 'roi_mask']}),
         ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold']}),
