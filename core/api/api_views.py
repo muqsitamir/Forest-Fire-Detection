@@ -33,12 +33,12 @@ class DynamicPagination(PageNumberPagination):
     max_page_size = 20
 
 
-class TowerDetailList(viewsets.ModelViewSet):
+class TowerViewSet(viewsets.ModelViewSet):
     def get(self, request):
         towers = Tower.objects.all().values()
         for tower in towers:
-            tower['cameras'] = (Camera.objects.filter(tower_id=tower['id'])).values()
-            tower['sensors'] = (Sensor.objects.filter(tower_id=tower['id'])).values()
+            tower['cameras'] = Camera.objects.filter(tower_id=tower['id']).values()
+            tower['sensors'] = Sensor.objects.filter(tower_id=tower['id']).values()
         return Response({'data': towers}, status=status.HTTP_200_OK)
 
 
