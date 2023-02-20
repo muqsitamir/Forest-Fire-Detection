@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import Organization
-from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event
+from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event, Tower, Sensor
 
 
 class SpecieSerializer(serializers.ModelSerializer):
@@ -66,6 +66,19 @@ class CameraSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class TowerSerializer(serializers.ModelSerializer):
+    cameras = CameraSerializer(many=True, read_only=True, source='camera_set')
+
+    class Meta:
+        model = Tower
+        fields = ('id', 'name', 'lat', 'lng', 'cameras',)
+    #
+    # def get_fields(self):
+    #     fields = super(TowerSerializer, self).get_fields()
+    #     fields['cameras'] = CameraSerializer(many=True)
+    #     return fields
+
+
 class CameraListSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -86,6 +99,12 @@ class OrganizationSerializer(serializers.ModelSerializer):
             return CameraListSerializer(Camera.objects.all(), many=True).data
         qs = Camera.objects.filter(organization=instance)
         return CameraListSerializer(qs, many=True).data
+
+
+class SensorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sensor
+        fields = ('id', 'name', 'lat', 'lng',)
 
 
 class ReadingSerializer(serializers.ModelSerializer):
