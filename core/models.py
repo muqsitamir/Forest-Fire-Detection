@@ -28,7 +28,6 @@ class Sensor(models.Model):
     name = models.CharField(max_length=200)
     lat = models.FloatField()
     lng = models.FloatField()
-    device = models.CharField(max_length=20, default="sensor")
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE)
     sensor_type = models.CharField(max_length=30, choices=(
         ('Temperature', 'Temperature'),

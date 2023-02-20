@@ -4,7 +4,7 @@ from django.urls import reverse
 from import_export.admin import ExportActionMixin
 from django.utils.timezone import localtime
 from core.filters import SpecieFilter, CameraFilter
-from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare
+from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor
 
 
 class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
@@ -16,6 +16,17 @@ class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
 class SlotAdminInline(admin.TabularInline):
     model = Slot
     extra = 0
+
+
+class TowerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'lat', 'lng',)
+    search_fields = ('id', "name",)
+
+
+class SensorAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'tower', 'sensor_type')
+    list_filter = "sensor_type"
+    search_fields = ('id', 'name', "tower", "sensor_type")
 
 
 class DontCareAdminInline(admin.TabularInline):
@@ -112,4 +123,6 @@ admin.site.register(Event, EventAdmin)
 admin.site.register(Specie, SpecieAdmin)
 admin.site.register(BoundingBox, BoundingBoxAdmin)
 admin.site.register(Log, LogAdmin)
+admin.site.register(Tower, TowerAdmin)
+admin.site.register(Sensor, SensorAdmin)
 
