@@ -25,7 +25,7 @@ class TowerAdmin(admin.ModelAdmin):
 
 class SensorAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'tower', 'sensor_type')
-    list_filter = "sensor_type"
+    list_filter = ("sensor_type",)
     search_fields = ('id', 'name', "tower", "sensor_type")
 
 
