@@ -13,8 +13,33 @@ from core.storage import OverwriteStorage
 User = get_user_model()
 
 
-class Camera(models.Model):
+class Tower(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    lat = models.FloatField()
+    lng = models.FloatField()
 
+    def __str__(self):
+        return 'T' + str(self.id) + ' - ' + str(self.name)
+
+
+class Sensor(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    lat = models.FloatField()
+    lng = models.FloatField()
+    device = models.CharField(max_length=20, default="sensor")
+    tower = models.ForeignKey(Tower, on_delete=models.CASCADE)
+    sensor_type = models.CharField(max_length=30, choices=(
+        ('Temperature', 'Temperature'),
+        ('Humidity', 'Humidity'),
+    ), default='Temperature')
+
+    def __str__(self):
+        return 'S' + str(self.id) + ' - ' + self.sensor_type + ' - ' + str(self.tower.name)
+
+
+class Camera(models.Model):
     # When True: only superuser can see the event associated with this camera on dashboard.
 
     test = models.BooleanField(default=True)
@@ -71,6 +96,8 @@ class Camera(models.Model):
     video_interval = models.IntegerField(default=15)
     update_after = models.FloatField(default=300)
     idol_4g_interval = models.FloatField(default=300)
+
+    tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"ID: {self.id} ({self.description})"
@@ -155,7 +182,7 @@ class Specie(models.Model):
 
 
 class BoundingBox(models.Model):
-    image = models.ForeignKey(Image, on_delete=models.CASCADE,)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, )
     specie = models.ForeignKey(Specie, null=True, on_delete=models.SET_NULL)
     x = models.FloatField()
     y = models.FloatField()
