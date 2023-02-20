@@ -23,7 +23,7 @@ from rest_framework.response import Response
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event
+from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, Sensor
 from core.notifications import send_push_notification
 
 
@@ -31,6 +31,15 @@ class DynamicPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 20
+
+
+class TowerDetailList(viewsets.ModelViewSet):
+    def get(self, request):
+        towers = Tower.objects.all().values()
+        for tower in towers:
+            tower['cameras'] = (Camera.objects.filter(tower_id=tower['id'])).values()
+            tower['sensors'] = (Sensor.objects.filter(tower_id=tower['id'])).values()
+        return Response({'data': towers}, status=status.HTTP_200_OK)
 
 
 class ImageFilterSet(filters.FilterSet):
