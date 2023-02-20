@@ -66,12 +66,19 @@ class CameraSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class SensorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sensor
+        fields = '__all__'
+
+
 class TowerSerializer(serializers.ModelSerializer):
     cameras = CameraSerializer(many=True, read_only=True, source='camera_set')
+    sensors = SensorSerializer(many=True, read_only=True, source='sensor_set')
 
     class Meta:
         model = Tower
-        fields = ('id', 'name', 'lat', 'lng', 'cameras',)
+        fields = ('id', 'name', 'lat', 'lng', 'cameras', 'sensors',)
     #
     # def get_fields(self):
     #     fields = super(TowerSerializer, self).get_fields()
