@@ -1,5 +1,7 @@
 import os
 from datetime import datetime, timedelta
+
+from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
 
 import django_filters
@@ -271,6 +273,17 @@ class CameraViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return self.queryset
         return self.queryset.filter(organization=self.request.user.organization)
+
+    @action(methods=['POST'], detail=False)
+    def live_update(self, request, *args, **kwargs):
+        cam_id = request.POST['cam_id']
+        live_image = request.FILES['file']
+        Camera.objects.filter(id=cam_id).update(live_image=f'liveimages/cam_{cam_id}_live_image')
+        fs = FileSystemStorage(location='media/liveimages')
+        if fs.exists(f'cam_{cam_id}_live_image'):
+            fs.delete(f'cam_{cam_id}_live_image')
+        fs.save(f'cam_{cam_id}_live_image', live_image)
+        return Response({'message': f'live image updated for camera {cam_id}'}, status=status.HTTP_200_OK)
 
 
 class OrganizationViewSet(generics.RetrieveAPIView):

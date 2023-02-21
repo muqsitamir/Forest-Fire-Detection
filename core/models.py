@@ -96,7 +96,9 @@ class Camera(models.Model):
     update_after = models.FloatField(default=300)
     idol_4g_interval = models.FloatField(default=300)
 
+    # vercel changes
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
+    live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True, blank=True)
 
     def __str__(self):
         return f"ID: {self.id} ({self.description})"
