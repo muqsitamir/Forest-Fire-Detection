@@ -29,8 +29,8 @@ urlpatterns += [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('core/', include(('core.urls', 'core'), namespace='core')),
+    path('controls/', include(('dashboard.urls'))),
     path('devices/', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
-    path('api/', include('dashboard.urls')),
     path('firebase-messaging-sw.js', views.ServiceWorkerView.as_view(), name='service_worker'),
 ]
 

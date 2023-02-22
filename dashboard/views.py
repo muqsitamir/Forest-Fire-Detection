@@ -3,73 +3,132 @@ from django.contrib.auth import login,logout,authenticate
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from .serializers import *
-from .models import *
-from django.contrib.auth.mixins import LoginRequiredMixin
+import paho.mqtt.client as paho
+from paho import mqtt
+import paho.mqtt.client as mqtt
+from time import sleep
+import certifi,json
+
 # Create your views here.
+class PTZControlsHawa(APIView):
+    def __init__(self):
+        self.res=0
+    def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code " + str(rc))
 
-class userform(LoginRequiredMixin,APIView):
-    def get(self,request):
-        return Response({'msg':'Registration success'}) 
+    def on_publish(self, client, userdata, mid):
+        print(client, userdata, mid)
+        if mid>self.res:
+            self.res=mid
 
-class LoginUserForm(APIView):
+    def on_log(self, mqttc, obj, level, string):
+        #print(string)
+        return string
+
     def post(self,request):
-        serializer=UserLoginSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            username=serializer.data.get('username')
-            password=serializer.data.get('password')
-            user=authenticate(request,username=username,password=password)
-            if user is not None:
-                return Response({'msg':'Login Successful'},status=status.HTTP_200_OK)
-            else:
-                return Response({'errors':['Username or Password is not valid']},status=status.HTTP_404_NOT_FOUND)
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+        print(request.data)
+        pan=request.data["pan"]
+        tilt=request.data["tilt"]
+        zoom=request.data["zoom"]
+            
+        client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
 
-class CameraList(LoginRequiredMixin,APIView):
-    def get(self,request):
-        data=Camera.objects.all()
-        print(data.values())
-        return Response({'data':data.values()},status=status.HTTP_200_OK)
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
 
-class EventList(APIView):
-    def get(self,request):
-        data=Event.objects.all()
-        print(data.values())
-        return Response({'data':data.values()},status=status.HTTP_200_OK)
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        client.publish("PTZ-HawaGali/PAN", pan, 1)
+        client.publish("PTZ-HawaGali/TILT", tilt, 1)
+        client.publish("PTZ-HawaGali/ZOOM", zoom, 1)
+        sleep(1)
+        pub = 0
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data":self.res}))
 
-class SensorList(LoginRequiredMixin,APIView):
-    def get(self,request):
-        data=Sensor.objects.all()
-        print(data.values())
-        return Response({'data':data.values()},status=status.HTTP_200_OK)
-class TowerList(LoginRequiredMixin,APIView):
-    def get(self,request):
-        data=Tower.objects.all()
-        print(data.values())
-        return Response({'data':data.values()},status=status.HTTP_200_OK)
-class TowerDetailList(APIView):
-    def get(self,request):
-        data=(Tower.objects.all()).values()
-        for i in data:
-            print(i)
-            i['cameras']=(Camera.objects.filter(tower_id=i['id'])).values()
-            i['sensors']=(Sensor.objects.filter(tower_id=i['id'])).values()
-        print(data)
-        return Response({'data':data},status=status.HTTP_200_OK)
-def loginUser(request):
-    if request.method=='POST':
-        username=request.POST['username']
-        password=request.POST['password']
-        user=authenticate(request,username=username,password=password)
-        if user is not None:
-            login(request,user)
-            request.session['status']='admin'
-            return redirect('home')
-        else:
-            messages.info(request,'Username OR Password is incorrect.')
-    return render(request,'login.html')
+class PTZControlsPanja(APIView):
+    def __init__(self):
+        self.res=0
+    def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code " + str(rc))
 
-def logoutUser(request):
-    logout(request)
-    request.session['status']='anonymous'
-    return redirect('loginUser')
+    def on_publish(self, client, userdata, mid):
+        print(client, userdata, mid)
+        if mid>self.res:
+            self.res=mid
+
+    def on_log(self, mqttc, obj, level, string):
+        #print(string)
+        return string
+
+    def post(self,request):
+        print(request.data)
+        pan=request.data["pan"]
+        tilt=request.data["tilt"]
+        zoom=request.data["zoom"]
+            
+        client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
+
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
+
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        client.publish("PTZ-PanjaGali/PAN", pan, 1)
+        client.publish("PTZ-PanjaGali/TILT", tilt, 1)
+        client.publish("PTZ-PanjaGali/ZOOM", zoom, 1)
+        sleep(1)
+        pub = 0
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data":self.res}))
+
+class PTZControlsPalm(APIView):
+    def __init__(self):
+        self.res=0
+    def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code " + str(rc))
+
+    def on_publish(self, client, userdata, mid):
+        print(client, userdata, mid)
+        if mid>self.res:
+            self.res=mid
+
+    def on_log(self, mqttc, obj, level, string):
+        #print(string)
+        return string
+
+    def post(self,request):
+        print(request.data)
+        pan=request.data["pan"]
+        tilt=request.data["tilt"]
+        zoom=request.data["zoom"]
+            
+        client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
+
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
+
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        client.publish("PTZ-PalmGali/PAN", pan, 1)
+        client.publish("PTZ-PalmGali/TILT", tilt, 1)
+        client.publish("PTZ-PalmGali/ZOOM", zoom, 1)
+        sleep(1)
+        pub = 0
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data":self.res}))
