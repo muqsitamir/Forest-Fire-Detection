@@ -12,3 +12,5 @@ suntime==1.2.5
 django-import-export==2.7.1
 uwsgi==2.0.20
 django_cron==0.6.0
+paho-mqtt
+certifi

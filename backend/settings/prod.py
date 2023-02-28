@@ -52,6 +52,7 @@ THIRD_PARTY_APPS = [
 CUSTOM_APPS = [
     'accounts',
     'core',
+    'dashboard'
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
@@ -129,16 +130,24 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+# commented this for testing purposes
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'forest_fire',
+#         'USER': 'root',
+#         'PASSWORD': 'fif_607_taj',
+#         'HOST': '139.162.11.234',
+#         'PORT': '3306',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'forest_fire',
-        'USER': 'root',
-        'PASSWORD': 'fif_607_taj',
-        'HOST': '139.162.11.234',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
 
 FCM_DJANGO_SETTINGS = {
     # default: _('FCM Django')
