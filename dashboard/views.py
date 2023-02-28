@@ -1,36 +1,36 @@
-from django.shortcuts import render
-from django.contrib.auth import login,logout,authenticate
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-import paho.mqtt.client as paho
-from paho import mqtt
-import paho.mqtt.client as mqtt
 from time import sleep
-import certifi,json
+
+import certifi
+import json
+import paho.mqtt.client as mqtt
+from paho import mqtt
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 
 # Create your views here.
 class PTZControlsHawa(APIView):
     def __init__(self):
-        self.res=0
+        self.res = 0
+
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
 
     def on_publish(self, client, userdata, mid):
         print(client, userdata, mid)
-        if mid>self.res:
-            self.res=mid
+        if mid > self.res:
+            self.res = mid
 
     def on_log(self, mqttc, obj, level, string):
-        #print(string)
+        # print(string)
         return string
 
-    def post(self,request):
+    def post(self, request):
         print(request.data)
-        pan=request.data["pan"]
-        tilt=request.data["tilt"]
-        zoom=request.data["zoom"]
-            
+        pan = request.data["pan"]
+        tilt = request.data["tilt"]
+        zoom = request.data["zoom"]
+
         client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -49,29 +49,31 @@ class PTZControlsHawa(APIView):
         pub = 0
         client.disconnect()
         client.loop_stop()
-        return Response(json.dumps({"data":self.res}))
+        return Response(json.dumps({"data": self.res}))
+
 
 class PTZControlsPanja(APIView):
     def __init__(self):
-        self.res=0
+        self.res = 0
+
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
 
     def on_publish(self, client, userdata, mid):
         print(client, userdata, mid)
-        if mid>self.res:
-            self.res=mid
+        if mid > self.res:
+            self.res = mid
 
     def on_log(self, mqttc, obj, level, string):
-        #print(string)
+        # print(string)
         return string
 
-    def post(self,request):
+    def post(self, request):
         print(request.data)
-        pan=request.data["pan"]
-        tilt=request.data["tilt"]
-        zoom=request.data["zoom"]
-            
+        pan = request.data["pan"]
+        tilt = request.data["tilt"]
+        zoom = request.data["zoom"]
+
         client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -90,29 +92,31 @@ class PTZControlsPanja(APIView):
         pub = 0
         client.disconnect()
         client.loop_stop()
-        return Response(json.dumps({"data":self.res}))
+        return Response(json.dumps({"data": self.res}))
+
 
 class PTZControlsPalm(APIView):
     def __init__(self):
-        self.res=0
+        self.res = 0
+
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
 
     def on_publish(self, client, userdata, mid):
         print(client, userdata, mid)
-        if mid>self.res:
-            self.res=mid
+        if mid > self.res:
+            self.res = mid
 
     def on_log(self, mqttc, obj, level, string):
-        #print(string)
+        # print(string)
         return string
 
-    def post(self,request):
+    def post(self, request):
         print(request.data)
-        pan=request.data["pan"]
-        tilt=request.data["tilt"]
-        zoom=request.data["zoom"]
-            
+        pan = request.data["pan"]
+        tilt = request.data["tilt"]
+        zoom = request.data["zoom"]
+
         client = mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -131,4 +135,4 @@ class PTZControlsPalm(APIView):
         pub = 0
         client.disconnect()
         client.loop_stop()
-        return Response(json.dumps({"data":self.res}))
+        return Response(json.dumps({"data": self.res}))
