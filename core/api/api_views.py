@@ -1,9 +1,13 @@
 import os
 from datetime import datetime, timedelta
+from time import sleep
 
+import json
+import paho.mqtt.client as mqtt
+import certifi
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
-
+import http.client
 import django_filters
 import imageio
 import cv2
@@ -15,6 +19,7 @@ from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters.widgets import CSVWidget
+from paho import mqtt
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -263,6 +268,7 @@ class CameraViewSet(viewsets.ModelViewSet):
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
     permission_classes = [IsAuthenticated]
+    res = 0
 
     def get_object(self):
         if self.request.user.is_superuser:
@@ -273,6 +279,42 @@ class CameraViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return self.queryset
         return self.queryset.filter(organization=self.request.user.organization)
+
+    def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code " + str(rc))
+
+    def on_publish(self, client, userdata, mid):
+        if mid > self.res:
+            self.res = mid
+
+    def on_log(self, mqttc, obj, level, string):
+        return string
+
+    @action(methods=['post'], detail=False)
+    def ptzControls(self, request):
+        pan = request.data["pan"]
+        tilt = request.data["tilt"]
+        zoom = request.data["zoom"]
+        camera = request.data["camera"]
+
+        client = mqtt.client.Client(clean_session=True, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
+
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
+
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        client.publish(f"PTZ-{camera}Gali/PAN", pan, 1)
+        client.publish(f"PTZ-{camera}Gali/TILT", tilt, 1)
+        client.publish(f"PTZ-{camera}Gali/ZOOM", zoom, 1)
+        sleep(1)
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data": self.res}))
 
     @action(methods=['POST'], detail=False)
     def live_update(self, request, *args, **kwargs):
@@ -312,3 +354,4 @@ class LogViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
