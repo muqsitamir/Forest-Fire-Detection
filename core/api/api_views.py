@@ -30,7 +30,7 @@ from rest_framework.response import Response
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, Sensor
+from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower
 from core.notifications import send_push_notification
 
 

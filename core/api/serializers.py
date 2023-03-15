@@ -20,7 +20,7 @@ class BoxSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    species = SpecieSerializer(read_only=True, many=True)
+    species = SpecieSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
     date = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
     updated_at = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S", read_only=True)
