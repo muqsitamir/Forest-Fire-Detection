@@ -138,7 +138,7 @@ class Image(models.Model):
     camera = models.ForeignKey(Camera, null=True, on_delete=models.SET_NULL)
     date = models.DateTimeField()
     event = models.ForeignKey('Event', blank=True, on_delete=models.CASCADE)
-    processed = models.BooleanField(default=False)
+    # processed = models.BooleanField(default=False)
     included = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
