@@ -1,6 +1,6 @@
 from datetime import datetime
 from signal import *
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import pre_delete, post_save
@@ -100,6 +100,9 @@ class Camera(models.Model):
     # vercel changes
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
     live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True, blank=True)
+
+    # yolo parameters
+    confidence_threshold = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)], default=0.2)
 
     def __str__(self):
         return f"ID: {self.id} ({self.description})"
