@@ -17,7 +17,7 @@ class ProcessEventsCronJob(CronJobBase):
     code = 'process_event_cron_job'
 
     def do(self):
-        events = Image.objects.filter(included=False, processed=True).values_list('event_id', flat=True).distinct()
+        events = Image.objects.filter(included=False).values_list('event_id', flat=True).distinct()
 
         for event in Event.objects.filter(uuid__in=events):
             event.species.clear()
