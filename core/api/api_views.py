@@ -51,7 +51,7 @@ class ImageFilterSet(filters.FilterSet):
 
     class Meta:
         model = Image
-        fields = ['processed', 'date_gte', 'date_lte']
+        fields = ['date_gte', 'date_lte']
 
 
 class EventFilterSet(filters.FilterSet):
@@ -179,7 +179,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     def process(self, request, *args, **kwargs):
         image = self.get_object()
         image.boundingbox_set.all().delete()
-        image.processed = False
+        # image.processed = False
         image.save()
         return self.boxview(request, *args, **kwargs)
 
