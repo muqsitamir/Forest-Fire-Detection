@@ -17,14 +17,14 @@ class ProcessEventsCronJob(CronJobBase):
     code = 'process_event_cron_job'
 
     def do(self):
-        events = Image.objects.filter(included=False).values_list('event_id', flat=True).distinct()
+        events = Image.objects.filter(included=False, processed=True).values_list('event_id', flat=True).distinct()
 
         for event in Event.objects.filter(uuid__in=events):
             event.species.clear()
             event.file.delete()
             event.thumbnail.delete()
 
-            images_qs = Image.objects.filter(event=event)
+            images_qs = Image.objects.filter(event=event, processed=True)
 
             with imageio.get_writer(f'{settings.MEDIA_ROOT}/temp/{event.uuid}_thumb.gif', mode='I',
                                     duration=0.5) as thumb_writer:

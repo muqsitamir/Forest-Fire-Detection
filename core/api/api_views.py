@@ -179,7 +179,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     def process(self, request, *args, **kwargs):
         image = self.get_object()
         image.boundingbox_set.all().delete()
-        # image.processed = False
+        image.processed = False
         image.save()
         return self.boxview(request, *args, **kwargs)
 
