@@ -68,10 +68,10 @@ class ImageAdmin(admin.ModelAdmin):
     list_filter = (SpecieFilter, 'camera__id', 'included')
     search_fields = ('event__uuid',)
 
-    def link_to_actions(self, obj):
-        if obj.processed:
-            return format_html('<a href="{}" target="_blank">Reprocess</a>', reverse("core:core-api:image-process", args=[obj.id]))
-        return format_html('<a href="{}" target="_blank">Process</a>', reverse("core:core-api:image-process", args=[obj.id]))
+    # def link_to_actions(self, obj):
+    #     if obj.processed:
+    #         return format_html('<a href="{}" target="_blank">Reprocess</a>', reverse("core:core-api:image-process", args=[obj.id]))
+    #     return format_html('<a href="{}" target="_blank">Process</a>', reverse("core:core-api:image-process", args=[obj.id]))
 
     def box_view(self, obj):
         return format_html(f'<a href={reverse("core:core-api:image-boxview", args=[obj.id])} target="_blank">BoxView</a>')
