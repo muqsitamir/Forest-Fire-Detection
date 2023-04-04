@@ -64,7 +64,7 @@ class CameraAdmin(admin.ModelAdmin):
 
 
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'file', 'included', 'date', 'event', 'camera', 'link_to_actions', 'box_view')
+    list_display = ('id', 'file', 'included', 'date', 'event', 'camera', 'box_view')
     list_filter = (SpecieFilter, 'camera__id', 'included')
     search_fields = ('event__uuid',)
 
