@@ -35,7 +35,7 @@ class DontCareAdminInline(admin.TabularInline):
 
 
 class CameraAdmin(admin.ModelAdmin):
-    list_display = ('id', 'description', 'user', 'live', 'should_log', 'contact_no', 'latitude', 'longitude',)
+    list_display = ('id', 'description', 'user', 'live', 'should_log', 'contact_no', 'latitude', 'longitude', 'confidence_threshold',)
     search_fields = ('id', 'latitude', 'longitude',)
     inlines = [SlotAdminInline, DontCareAdminInline]
     actions = ['turn_logging_on', 'turn_logging_off', 'start_capture', 'stop_capturing']
@@ -44,7 +44,7 @@ class CameraAdmin(admin.ModelAdmin):
         (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower', 'live_image',]}),
         ('Stats', {'fields': ['last_reported_at', 'remaining_storage']}),
         ('Capture Settings', {'fields': ['frames_per_sec', 'image_width', 'image_height', 'roi_mask']}),
-        ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold']}),
+        ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold', 'confidence_threshold']}),
         ('Site', {'fields': ['latitude', 'longitude', 'sunrise', 'sunset', 'contact_no']}),
         ('Pins', {'fields': ['infrared', 'pwm', 'filter_a', 'filter_b', 'motion_1', 'motion_2', 'pin_4g']}),
         ('Intervals', {'fields': ['update_after', 'video_interval', 'rest_interval', 'motion_interval', 'idol_4g_interval']}),
