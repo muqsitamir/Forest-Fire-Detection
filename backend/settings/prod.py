@@ -86,7 +86,7 @@ MIDDLEWARE = [
 
 
 CRON_CLASSES = [
-    # "cronjobs.process_images.ProcessImagesCronJob",
+    "cronjobs.process_images.ProcessImagesCronJob",
     "cronjobs.process_events.ProcessEventsCronJob",
     "cronjobs.set_sun_times.SetSunTimesCronJob",
 ]
