@@ -7,7 +7,7 @@ from .api_views import ImageViewSet, BoxViewSet, CameraViewSet, ReadingViewSet, 
 router = routers.DefaultRouter()
 router.register('image', ImageViewSet)
 router.register('event', EventViewSet)
-router.register('box', BoxViewSet) 
+router.register('box', BoxViewSet)
 router.register('reading', ReadingViewSet)
 router.register('camera', CameraViewSet)
 # router.register('organization', OrganizationViewSet)
