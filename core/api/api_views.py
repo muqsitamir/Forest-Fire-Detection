@@ -171,7 +171,19 @@ class ImageViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            return super(ImageViewSet, self).create(request, *args, **kwargs)
+            resp = super(ImageViewSet, self).create(request, *args, **kwargs)
+            if 'bbox_data' in request.data:
+                boxes = json.loads(request.data['bbox_data'].replace("'", '"'))
+                image = Image.objects.filter(id=resp.data['id'])[0]
+                for box in boxes:
+                    if box['class'] == '0':
+                        detection = "smoke"
+                    elif box['class'] == '1':
+                        detection = "fire"
+                    bbox = BoundingBox(image=image, specie_id=detection, **box['box'])
+                    bbox.save()
+            return resp
+
         except IntegrityError:
             return Response({'error': 'Duplicate image for this timestamp'}, status=status.HTTP_208_ALREADY_REPORTED)
 
