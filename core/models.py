@@ -1,5 +1,7 @@
 from datetime import datetime
 from signal import *
+
+from django.contrib.sites import requests
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -99,7 +101,8 @@ class Camera(models.Model):
 
     # vercel changes
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
-    live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True, blank=True)
+    live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True,
+                                         blank=True)
 
     # yolo parameters
     confidence_threshold = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)], default=0.2)
@@ -219,6 +222,7 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     sms_sent = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS, default=NONE)
+    weather_data = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ('-created_at',)
@@ -228,6 +232,29 @@ class Event(models.Model):
 
     def __str__(self):
         return str(self.uuid)
+
+    def get_weather_data(self):
+        if self.date and self.camera:
+            # Replace 'YOUR_API_KEY' with your actual OpenWeather API key
+            api_key = '13e8f6a07b4654d035d3cb3280725fe7'
+            created_at = self.created_at
+            longitude = self.camera.longitude
+            latitude = self.camera.latitude
+
+            # Convert the created_at date to a Unix timestamp
+            unix_timestamp = int(created_at.timestamp())
+
+            url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
+
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                weather_data = response.json()
+                return weather_data
+            else:
+                return None
+        else:
+            return None
 
 
 class Log(models.Model):
