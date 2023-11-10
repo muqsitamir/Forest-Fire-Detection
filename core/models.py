@@ -1,7 +1,6 @@
 from datetime import datetime
 from signal import *
 
-from django.contrib.sites import requests
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -11,7 +10,7 @@ from fcm_django.models import FCMDevice
 
 from core import fields
 from core.storage import OverwriteStorage
-
+import requests
 User = get_user_model()
 
 
