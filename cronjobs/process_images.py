@@ -33,13 +33,13 @@ class ProcessImagesCronJob(CronJobBase):
                 box_dict = {
                     'y': box['ymin'],
                     'x': box['xmin'],
-                    'height': box['ymax'] - box['ymin'],
-                    'width': box['xmax'] - box['xmin']
+                    'height': box['ymax'],
+                    'width': box['xmax']
                 }
                 if box['class'] == 0:
-                    box_dict['specie_id'] = "fire"
-                elif box['class'] == 1:
                     box_dict['specie_id'] = "smoke"
+                elif box['class'] == 1:
+                    box_dict['specie_id'] = "fire"
                 boxes[index] = box_dict
                 index += 1
 
