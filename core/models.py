@@ -235,7 +235,7 @@ class Event(models.Model):
     def get_weather_data(self):
         if self.date and self.camera:
             # Replace 'YOUR_API_KEY' with your actual OpenWeather API key
-            api_key = '13e8f6a07b4654d035d3cb3280725fe7'
+            api_key = 'e39776ce233e18ced07d61cbc6dbe2a1'
             created_at = self.created_at
             longitude = self.camera.longitude
             latitude = self.camera.latitude
