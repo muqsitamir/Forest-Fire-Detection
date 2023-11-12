@@ -10,7 +10,7 @@ class UpdateWeatherDataCronJob(CronJobBase):
     code = 'update_weather_data_cron_job'
 
     def do(self):
-        events = Event.objects.filter(weather_data__isnull=True)[:10]
+        events = Event.objects.filter(weather_data__isnull=True)[:800]
 
         for event in events:
             if event.created_at:
