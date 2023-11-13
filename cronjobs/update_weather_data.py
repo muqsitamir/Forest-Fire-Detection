@@ -13,8 +13,10 @@ class UpdateWeatherDataCronJob(CronJobBase):
         events = Event.objects.filter(weather_data__isnull=True).order_by('-created_at')[:800]
 
         for event in events:
-            if event.created_at:
+            try:
                 weather_data = event.get_weather_data()
                 if weather_data:
                     event.weather_data = weather_data
                     event.save()
+            except Exception as e:
+                continue
