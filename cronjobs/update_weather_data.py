@@ -4,7 +4,7 @@ from core.models import Event
 
 
 class UpdateWeatherDataCronJob(CronJobBase):
-    RUN_EVERY_MINS = 1
+    RUN_EVERY_MINS = 1540
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'update_weather_data_cron_job'
