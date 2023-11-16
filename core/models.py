@@ -232,9 +232,9 @@ class Event(models.Model):
     def __str__(self):
         return str(self.uuid)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.weather_data = self.get_weather_data()
-        super().save()
+        super().save(*args, **kwargs)
 
     def get_weather_data(self):
         if self.date and self.camera:
