@@ -239,11 +239,11 @@ class Event(models.Model):
     def get_weather_data(self):
         if self.date and self.camera:
             api_key = 'e39776ce233e18ced07d61cbc6dbe2a1'
-            created_at = self.created_at
+            date = self.date
             longitude = self.camera.longitude
             latitude = self.camera.latitude
 
-            unix_timestamp = int(created_at.timestamp())
+            unix_timestamp = int(date.timestamp())
 
             url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
 
