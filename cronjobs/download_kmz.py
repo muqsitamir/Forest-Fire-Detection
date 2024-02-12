@@ -1,16 +1,33 @@
-# your_app_name/management/commands/download_kmz.py
-
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django_cron import CronJobBase, Schedule
 
 
-class Command(BaseCommand):
-    help = 'Download KMZ file'
 
-    def handle(self, *args, **options):
+class DownloadKMZCronJob(CronJobBase):
+    RUN_EVERY_MINS = 60 * 24
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'Download_KMZ_Cron_Job'
+
+    def __init__(self):
+        super().__init__()
+        self.style = None
+        self.stdout = None
+
+    def do(self):
+        desired_start_time = time(23, 50)
+
+        current_datetime = datetime.now()
+
+        time_until_start = datetime.combine(current_datetime.date(), desired_start_time) - current_datetime
+
+        if time_until_start.total_seconds() < 0:
+            time_until_start += timedelta(days=1)
+
+        self.schedule.run_every_mins = int(time_until_start.total_seconds() / 60)
+
         firms_api_url = 'https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/south_asia/24h/c6.1/FirespotArea_south_asia_c6.1_24h.kmz'
 
         current_date = datetime.now().strftime('%Y%m%d')
@@ -28,3 +45,4 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'KMZ file downloaded successfully at: {output_path}'))
         else:
             self.stdout.write(self.style.ERROR(f'Failed to download KMZ file. Status code: {response.status_code}'))
+
