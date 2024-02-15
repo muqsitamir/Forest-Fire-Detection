@@ -232,7 +232,6 @@ class Event(models.Model):
             longitude = self.camera.longitude
             latitude = self.camera.latitude
 
-
             unix_timestamp = int(created_at.timestamp())
 
             url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
@@ -246,7 +245,6 @@ class Event(models.Model):
                 return None
         else:
             return None
-
 
     class Meta:
         ordering = ('-created_at',)

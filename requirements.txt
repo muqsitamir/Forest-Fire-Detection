@@ -13,7 +13,6 @@ django-import-export==2.7.1
 django_cron==0.6.0
 paho-mqtt~=1.6.1
 certifi~=2023.7.22
-
 requests~=2.31.0
 geopandas~=0.14.3
 geopy~=2.4.1
