@@ -37,7 +37,7 @@ from core.notifications import send_push_notification
 class DynamicPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
-    max_page_size = 20
+    max_page_size = 100
 
 
 class TowerViewSet(viewsets.ModelViewSet):

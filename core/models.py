@@ -1,5 +1,6 @@
 from datetime import datetime
 from signal import *
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -99,7 +100,8 @@ class Camera(models.Model):
 
     # vercel changes
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
-    live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True, blank=True)
+    live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True,
+                                         blank=True)
 
     # yolo parameters
     confidence_threshold = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)], default=0.2)
@@ -245,6 +247,7 @@ class Event(models.Model):
         else:
             return None
 
+
     class Meta:
         ordering = ('-created_at',)
 
@@ -257,6 +260,27 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         self.weather_data = self.get_weather_data()
         super().save(*args, **kwargs)
+
+    def get_weather_data(self):
+        if self.date and self.camera:
+            api_key = 'e39776ce233e18ced07d61cbc6dbe2a1'
+            date = self.date
+            longitude = self.camera.longitude
+            latitude = self.camera.latitude
+
+            unix_timestamp = int(date.timestamp())
+
+            url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
+
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                weather_data = response.json()
+                return weather_data
+            else:
+                return None
+        else:
+            return None
 
 
 class Log(models.Model):

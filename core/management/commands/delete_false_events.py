@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         events = Event.objects.filter(
-                camera__id=options['camera_id'], date__lte=datetime.date(int(options['year']), int(options['month']), int(options['date']))).exclude(Q(species="vehicle") | Q(species="animal") | Q(species="person"))
+                camera__id=options['camera_id'], date__lte=datetime.date(int(options['year']), int(options['month']), int(options['date']))).exclude(Q(species="fire") | Q(species="smoke"))
         message = events.count()
         if options['delete']:
             events.delete()
