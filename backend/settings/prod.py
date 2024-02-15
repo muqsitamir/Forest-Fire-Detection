@@ -89,7 +89,6 @@ CRON_CLASSES = [
     "cronjobs.process_images.ProcessImagesCronJob",
     "cronjobs.process_events.ProcessEventsCronJob",
     "cronjobs.set_sun_times.SetSunTimesCronJob",
-    "cronjobs.update_weather_data.UpdateWeatherDataCronJob",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
