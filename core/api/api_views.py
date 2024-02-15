@@ -169,6 +169,13 @@ class ImageViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ImageFilterSet
 
+    def get_queryset(self):
+        event_uuid = self.request.query_params.get('event')
+        if event_uuid:
+            return Image.objects.filter(event__uuid=event_uuid)
+        else:
+            return Image.objects.none()
+
     def create(self, request, *args, **kwargs):
         try:
             resp = super(ImageViewSet, self).create(request, *args, **kwargs)
