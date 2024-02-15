@@ -1,23 +1,20 @@
-# myapp/management/commands/update_weather_data.py
-
 from django.core.management.base import BaseCommand
-from core.models import Event  # Import your Event model
+
+from core.models import Event
+
 
 class Command(BaseCommand):
-    help = 'Update weather data for existing events'
+    help = 'Sets the weather data for remaining events in a recent first manner'
 
-    def handle(self, *args, **kwargs):
-        events = Event.objects.filter(weather_data__isnull=True)
+    def handle(self, *args, **options):
+        events = Event.objects.filter(weather_data__isnull=True).order_by('-created_at')[:800]
 
         for event in events:
-            # Fetch weather data only if the event has a valid created_at date
-            if event.created_at:
+            try:
                 weather_data = event.get_weather_data()
                 if weather_data:
                     event.weather_data = weather_data
                     event.save()
-                    self.stdout.write(self.style.SUCCESS(f'Successfully updated weather data for Event {event.uuid}'))
-                else:
-                    self.stdout.write(self.style.WARNING(f'Unable to fetch weather data for Event {event.uuid}'))
-            else:
-                self.stdout.write(self.style.WARNING(f'Event {event.uuid} does not have a valid created_at date'))
+            except Exception as e:
+                continue
+

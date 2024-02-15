@@ -28,11 +28,22 @@ class ProcessImagesCronJob(CronJobBase):
             except Exception as e:
                 log = True
                 boxes = []
-            boxes = [BoundingBox(image=image, **box) for box in boxes if not is_dont_care(box, image.camera)]
+            index = 0
+            for box in boxes:
+                box_dict = {
+                    'y': box['ymin'],
+                    'x': box['xmin'],
+                    'height': box['ymax'],
+                    'width': box['xmax']
+                }
+                if box['class'] == 0:
+                    box_dict['specie_id'] = "smoke"
+                elif box['class'] == 1:
+                    box_dict['specie_id'] = "fire"
+                boxes[index] = box_dict
+                index += 1
 
-            for bbox in boxes:
-                if bbox.specie_id not in ['person', 'vehicle']:
-                    bbox.specie = Specie.objects.get(id='animal')
+            boxes = [BoundingBox(image=image, **box) for box in boxes if not is_dont_care(box, image.camera)]
 
             BoundingBox.objects.bulk_create(boxes)
             image.processed = True

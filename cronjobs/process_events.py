@@ -36,9 +36,9 @@ class ProcessEventsCronJob(CronJobBase):
 
                         for box in BoundingBox.objects.filter(image=image):
                             height, width = image_data.shape[:2]
-                            x, y, w, h = int(box.x * width), int(box.y * height), int(box.width * width), int(
-                                box.height * height)
-                            image_data = cv2.rectangle(image_data, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                            x, y, x2, y2 = int(box.x), int(box.y), int(box.width), int(
+                                box.height)
+                            image_data = cv2.rectangle(image_data, (x, y), (x2, y2), (0, 0, 255), 2)
                             event.species.add(box.specie)
 
                         writer.append_data(image_data)
