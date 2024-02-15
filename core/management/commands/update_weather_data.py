@@ -17,3 +17,4 @@ class Command(BaseCommand):
                     event.save()
             except Exception as e:
                 continue
+

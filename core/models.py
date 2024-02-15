@@ -222,6 +222,31 @@ class Event(models.Model):
     sms_sent = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS, default=NONE)
     weather_data = models.JSONField(null=True, blank=True)
+    nasa_tag = models.BooleanField(default=False)
+
+    def get_weather_data(self):
+        if self.date and self.camera:
+
+            api_key = '13e8f6a07b4654d035d3cb3280725fe7'
+            created_at=self.created_at
+            longitude = self.camera.longitude
+            latitude = self.camera.latitude
+
+
+            unix_timestamp = int(created_at.timestamp())
+
+            url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
+
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                weather_data = response.json()
+                return weather_data
+            else:
+                return None
+        else:
+            return None
+
 
     class Meta:
         ordering = ('-created_at',)
