@@ -1,13 +1,14 @@
 from datetime import datetime
+import time
 from signal import *
-
+from django.core.cache import cache
+from django.core.exceptions import SuspiciousOperation
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from fcm_django.models import FCMDevice
-
 from core import fields
 from core.storage import OverwriteStorage
 import requests
@@ -234,24 +235,53 @@ class Event(models.Model):
         return str(self.uuid)
 
     def save(self, *args, **kwargs):
-        self.weather_data = self.get_weather_data()
+        if self.weather_data is None:
+            rate_limit_result = self.check_weather_api_rate_limit()
+            if rate_limit_result != "OK":
+                raise SuspiciousOperation(rate_limit_result)
+
+            self.weather_data = self.get_weather_data()
+
         super().save(*args, **kwargs)
 
+    def check_weather_api_rate_limit(self):
+        daily_key = "weather_api_daily"
+        cache.add(daily_key, 0)
+        print("in limit function")
+        daily_count = cache.get(daily_key, 0)
+        if daily_count >= 900:
+            return "Daily API call limit exceeded"
+
+        current_timestamp = int(time.time())
+        minute_key = "weather_api_minute"
+        cache.add(minute_key, 0)
+        minute_count = cache.get(minute_key, 0, )
+        if (current_timestamp - cache.get("last_api_call_timestamp", 0)) < 60 and minute_count >= 55:
+            return "API call limit exceeded for this minute"
+
+        cache.incr(daily_key)
+        cache.incr(minute_key)
+        cache.set("last_api_call_timestamp", current_timestamp)
+
+        return "OK"
+
     def get_weather_data(self):
+
         if self.date and self.camera:
-            api_key = 'e39776ce233e18ced07d61cbc6dbe2a1'
+            api_key = 'fd4cb04cf440021f2d0fca118aa89858'
             date = self.date
             longitude = self.camera.longitude
             latitude = self.camera.latitude
-
+            print("in get_weather_data function")
             unix_timestamp = int(date.timestamp())
 
             url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
 
             response = requests.get(url)
-
+            print(response.status_code)
             if response.status_code == 200:
                 weather_data = response.json()
+                print(weather_data)
                 return weather_data
             else:
                 return "N/A"

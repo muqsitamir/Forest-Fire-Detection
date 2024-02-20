@@ -225,3 +225,5 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'lumscameratrap@gmail.com'
 EMAIL_HOST_PASSWORD = 'xzwr fguu icqv jxlv'
 DEFAULT_FROM_EMAIL = "lumscameratrap@gmail.com"
+
+

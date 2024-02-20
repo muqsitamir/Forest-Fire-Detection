@@ -10,10 +10,8 @@ class Command(BaseCommand):
         events = Event.objects.filter(weather_data__isnull=True).order_by('-created_at')[:50]
 
         for event in events:
+            print(event)
             try:
-                weather_data = event.get_weather_data()
-                if weather_data:
-                    event.weather_data = weather_data
-                    event.save()
+                event.save()
             except Exception as e:
-                continue
+                print(e)
