@@ -98,7 +98,9 @@ CORS_ORIGIN_WHITELIST = (
        'http://127.0.0.1:8000',
        'https://forestwatch.org.pk',
 )
-
+CORS_ALLOWED_ORIGINS = [
+    "https://forestwatch.org.pk",
+]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # 'rest_framework.authentication.BasicAuthentication',
