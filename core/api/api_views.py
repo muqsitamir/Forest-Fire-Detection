@@ -172,7 +172,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         event_uuid = self.request.query_params.get('event')
         if event_uuid:
-            return Image.objects.filter(event__uuid=event_uuid)
+            return Image.objects.filter(event__uuid=event_uuid).order_by('date')
         else:
             return Image.objects.none()
 
