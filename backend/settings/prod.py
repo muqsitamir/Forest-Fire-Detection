@@ -99,8 +99,17 @@ CORS_ORIGIN_WHITELIST = (
        'https://forestwatch.org.pk',
 )
 CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:3000',
     "https://forestwatch.org.pk",
 ]
+CORS_PREFLIGHT_MAX_AGE = 86400  # 1 day
+
+CORS_ALLOW_HEADERS = (
+    'access-control-allow-origin',
+    'content-type',
+    'authorization',
+)
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # 'rest_framework.authentication.BasicAuthentication',
