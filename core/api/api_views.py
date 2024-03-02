@@ -315,7 +315,7 @@ class CameraViewSet(viewsets.ModelViewSet):
         tilt = request.data["tilt"]
         zoom = request.data["zoom"]
         camera = request.data["camera"]
-
+        power = request.data.get("power", "on")
         client = mqtt.client.Client(clean_session=True, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -327,6 +327,10 @@ class CameraViewSet(viewsets.ModelViewSet):
         client.username_pw_set("admin", "Lumsadmin@n1")
         client.connect(host, 8883, 60)
         client.loop_start()
+        if power.lower() == "on":
+            client.publish(f"{camera}/POWER", "ON", 1)
+        elif power.lower() == "off":
+            client.publish(f"{camera}/POWER", "OFF", 1)
         client.publish(f"{camera}/PAN", pan, 1)
         client.publish(f"{camera}/TILT", tilt, 1)
         client.publish(f"{camera}/ZOOM", zoom, 1)
