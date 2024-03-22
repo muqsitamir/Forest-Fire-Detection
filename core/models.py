@@ -103,7 +103,7 @@ class Camera(models.Model):
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
     live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True,
                                          blank=True)
-
+    live_stream_url = models.CharField(max_length=100, blank=True)
     # yolo parameters
     confidence_threshold = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)], default=0.2)
 

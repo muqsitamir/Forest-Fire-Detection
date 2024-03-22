@@ -339,6 +339,30 @@ class CameraViewSet(viewsets.ModelViewSet):
         client.loop_stop()
         return Response(json.dumps({"data": self.res}))
 
+    @action(methods=['post'], detail=False)
+    def ptzControlsOn(self, request):
+        camera = request.data["camera"]
+        power = request.data.get("power", "on")
+        message = request.data["message"]
+        client = mqtt.client.Client(clean_session=True, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
+
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
+
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        if power.lower() == "on":
+            client.publish(f"{camera}/POWER", "ON", 1)
+        elif power.lower() == "off":
+            client.publish(f"{camera}/POWER", "OFF", 1)
+        sleep(1)
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data": self.res}))
     @action(methods=['POST'], detail=False)
     def live_update(self, request, *args, **kwargs):
         cam_id = request.POST['cam_id']
