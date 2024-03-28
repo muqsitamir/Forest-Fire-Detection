@@ -29,8 +29,9 @@ from rest_framework.response import Response
 
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
-    ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower
+    ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer, \
+    PTZCameraPresetSerializer
+from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset
 from core.notifications import send_push_notification
 
 
@@ -315,7 +316,6 @@ class CameraViewSet(viewsets.ModelViewSet):
         tilt = request.data["tilt"]
         zoom = request.data["zoom"]
         camera = request.data["camera"]
-        power = request.data.get("power", "on")
         client = mqtt.client.Client(clean_session=True, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -327,10 +327,6 @@ class CameraViewSet(viewsets.ModelViewSet):
         client.username_pw_set("admin", "Lumsadmin@n1")
         client.connect(host, 8883, 60)
         client.loop_start()
-        if power.lower() == "on":
-            client.publish(f"{camera}/POWER", "ON", 1)
-        elif power.lower() == "off":
-            client.publish(f"{camera}/POWER", "OFF", 1)
         client.publish(f"{camera}/PAN", pan, 1)
         client.publish(f"{camera}/TILT", tilt, 1)
         client.publish(f"{camera}/ZOOM", zoom, 1)
@@ -401,4 +397,28 @@ class LogViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class PTZCameraPresetListCreateAPIView(viewsets.ModelViewSet):
+    queryset = PTZCameraPreset.objects.all()
+    serializer_class = PTZCameraPresetSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
+    queryset = PTZCameraPreset.objects.all()
+    serializer_class = PTZCameraPresetSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        preset_id = self.request.query_params.get('id')
+        if preset_id is not None:
+            queryset = queryset.filter(id=preset_id)
+        return queryset
 

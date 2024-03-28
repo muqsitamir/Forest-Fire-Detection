@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework import routers
 
 from .api_views import ImageViewSet, BoxViewSet, CameraViewSet, ReadingViewSet, LogViewSet, EventViewSet, \
-    OrganizationViewSet, TowerViewSet
+    OrganizationViewSet, TowerViewSet, PTZCameraPresetDetailAPIView
 
 router = routers.DefaultRouter()
 router.register('image', ImageViewSet)
@@ -13,7 +13,7 @@ router.register('camera', CameraViewSet)
 # router.register('organization', OrganizationViewSet)
 router.register('logs', LogViewSet)
 router.register('towers', TowerViewSet)
-
+router.register('preset',PTZCameraPresetDetailAPIView)
 
 urlpatterns = []
 

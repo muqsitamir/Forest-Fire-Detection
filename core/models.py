@@ -345,3 +345,21 @@ def event_delete(sender, instance, **kwargs):
 def set_uploaded_at(sender, instance, **kwargs):
     instance.camera.last_uploaded_at = datetime.now()
     instance.camera.save()
+
+
+
+class PTZCameraPreset(models.Model):
+    camera_id = models.CharField(max_length=50)
+    name = models.CharField(max_length=255)
+    zoom_min = models.FloatField()
+    zoom_max = models.FloatField()
+    zoom_default = models.FloatField()
+    pan_min = models.FloatField()
+    pan_max = models.FloatField()
+    pan_default = models.FloatField()
+    tilt_min = models.FloatField()
+    tilt_max = models.FloatField()
+    tilt_default = models.FloatField()
+
+    def __str__(self):
+        return f"{self.camera_id} - {self.name}"
