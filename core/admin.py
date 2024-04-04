@@ -117,7 +117,7 @@ class LogAdmin(ExportActionMixin, admin.ModelAdmin):
     logged_at_sec.short_description = 'Logged At'
 
 class PTZCameraPresetAdmin(admin.ModelAdmin):
-    list_display = ('camera_id', 'name', 'zoom_min', 'zoom_max', 'zoom_default', 'pan_min', 'pan_max', 'pan_default', 'tilt_min', 'tilt_max', 'tilt_default')
+    list_display = ('camera_id', 'name', 'zoom_min', 'zoom_max', 'zoom_default', 'pan_min', 'pan_max', 'pan_default', 'tilt_min', 'tilt_max', 'tilt_default','description')
     list_filter = ('camera_id', 'name')
     search_fields = ('camera_id', 'name')
 

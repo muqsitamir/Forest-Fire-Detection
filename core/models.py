@@ -360,6 +360,7 @@ class PTZCameraPreset(models.Model):
     tilt_min = models.FloatField()
     tilt_max = models.FloatField()
     tilt_default = models.FloatField()
+    description=models.CharField(max_length=500, blank=True)
 
     def __str__(self):
         return f"{self.camera_id} - {self.name}"
