@@ -423,8 +423,8 @@ class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        preset_id = self.request.query_params.get('camera_id')
-        if preset_id is not None:
-            queryset = queryset.filter(id=preset_id)
+        camera_id = self.request.query_params.get('camera_id')
+        if camera_id is not None:
+            queryset = queryset.filter(camera_id=camera_id)
         return queryset
 
