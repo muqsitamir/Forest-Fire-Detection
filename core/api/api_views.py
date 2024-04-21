@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from time import sleep
-
+from django.utils import timezone
 import json
 import paho.mqtt.client as mqtt
 import certifi
@@ -77,6 +77,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
+        # Get date range from filter parameters
         if not self.request.user.is_superuser:
             # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
             qs = qs.filter(Q(species="vehicle") | Q(species="animal") | Q(species="person")).filter(
@@ -427,4 +428,5 @@ class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
         if camera_id is not None:
             queryset = queryset.filter(camera_id=camera_id)
         return queryset
+
 

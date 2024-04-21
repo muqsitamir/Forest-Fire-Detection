@@ -12,6 +12,7 @@ from fcm_django.models import FCMDevice
 from core import fields
 from core.storage import OverwriteStorage
 import requests
+from django.utils import timezone
 User = get_user_model()
 
 
@@ -224,7 +225,7 @@ class Event(models.Model):
     status = models.CharField(max_length=20, choices=STATUS, default=NONE)
     weather_data = models.JSONField(null=True, blank=True)
     nasa_tag = models.BooleanField(default=False)
-
+    weather_station = models.JSONField(null=True, blank=True)
     class Meta:
         ordering = ('-created_at',)
 
@@ -241,8 +242,52 @@ class Event(models.Model):
                 raise SuspiciousOperation(rate_limit_result)
 
             self.weather_data = self.get_weather_data()
+        if self.weather_station is None:
 
+            self.check_weather_station_api()
         super().save(*args, **kwargs)
+
+    def check_weather_station_api(self):
+        current_time = timezone.now()
+        start_ts = int(current_time.timestamp()) * 1000
+        device_id =""
+        base_url = "http://icarus.lums.edu.pk/api/plugins/telemetry/DEVICE/"
+        print(self.camera_id)
+        if self.camera_id == 5:
+            device_id = "c721d8c0-3a21-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 3:
+            device_id = "8a86c4b0-3cb1-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 6:
+            device_id = "9c4c6f10-30db-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 7:
+            device_id = "9e6f1ab0-3a20-11ee-9dc2-07b8268a3068"
+
+        keys = "Air_Temperature,Air_Humidity"
+        ts_params = f"&startTs={start_ts}"
+        url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
+        headers = {
+            "Content-Type": "application/json",
+            "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6ImQ4ZDVjN2Q3LTUwODEtNGNjZS05ZGJjLWNmMTZmMzMwZDg2MiIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzEzMzc2Nzc4LCJleHAiOjE3MTM5ODE0NzgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.vRDFHjldIC_LrRvIsoR3EscyqemKZW7pmWHaKLMi2ZYSWNZ4wDBunt_e9pDw96qKwuCyHXxH8GH3MMxkR_VG9Q"
+        }
+        print(url)
+        try:
+            response = requests.get(url, headers=headers)
+            print(response.status_code)
+            if response.status_code == 200:
+                weather_data = response.json()
+                print(weather_data)
+                if weather_data:
+                    air_temp_value = weather_data.get("Air_Temperature", [{}])[0].get("value")
+                    air_humidity_value = weather_data.get("Air_Humidity", [{}])[0].get("value")
+
+                    self.weather_station = {
+                        "Air_Temp": air_temp_value,
+                        "Air_Humidity": air_humidity_value,
+                    }
+                    self.save()
+        except requests.RequestException as e:
+            print(f"Error fetching weather data: {e}")
+
 
     def check_weather_api_rate_limit(self):
         daily_key = "weather_api_daily"
