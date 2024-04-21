@@ -243,12 +243,12 @@ class Event(models.Model):
 
             self.weather_data = self.get_weather_data()
         if self.weather_station is None:
-
-            self.check_weather_station_api()
+            self.weather_station = self.check_weather_station_api()
         super().save(*args, **kwargs)
 
     def check_weather_station_api(self):
         current_time = timezone.now()
+        print(self.created_at)
         start_ts = int(current_time.timestamp()) * 1000
         device_id =""
         base_url = "http://icarus.lums.edu.pk/api/plugins/telemetry/DEVICE/"
@@ -261,16 +261,16 @@ class Event(models.Model):
             device_id = "9c4c6f10-30db-11ee-9dc2-07b8268a3068"
         elif self.camera_id == 7:
             device_id = "9e6f1ab0-3a20-11ee-9dc2-07b8268a3068"
-
-        keys = "Air_Temperature,Air_Humidity"
-        ts_params = f"&startTs={start_ts}"
-        url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
-        headers = {
+        if device_id:
+         keys = "Air_Temperature,Air_Humidity"
+         ts_params = f"&startTs={start_ts}"
+         url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
+         headers = {
             "Content-Type": "application/json",
             "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6ImQ4ZDVjN2Q3LTUwODEtNGNjZS05ZGJjLWNmMTZmMzMwZDg2MiIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzEzMzc2Nzc4LCJleHAiOjE3MTM5ODE0NzgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.vRDFHjldIC_LrRvIsoR3EscyqemKZW7pmWHaKLMi2ZYSWNZ4wDBunt_e9pDw96qKwuCyHXxH8GH3MMxkR_VG9Q"
-        }
-        print(url)
-        try:
+         }
+         print(url)
+         try:
             response = requests.get(url, headers=headers)
             print(response.status_code)
             if response.status_code == 200:
@@ -284,9 +284,10 @@ class Event(models.Model):
                         "Air_Temp": air_temp_value,
                         "Air_Humidity": air_humidity_value,
                     }
-                    self.save()
-        except requests.RequestException as e:
+                    return self.weather_station
+         except requests.RequestException as e:
             print(f"Error fetching weather data: {e}")
+            return 'null'
 
 
     def check_weather_api_rate_limit(self):
