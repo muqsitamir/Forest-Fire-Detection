@@ -1,3 +1,4 @@
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -13,7 +14,10 @@ class Command(BaseCommand):
         print("weather station")
         for event in events:
             start_ts = int(event.created_at.timestamp()) * 1000
-
+            print(start_ts)
+            endTs_datetime = event.created_at + timedelta(minutes=10)
+            endTs = int(endTs_datetime.timestamp()) * 1000
+            print(endTs)
             device_id = ""
             base_url = "http://icarus.lums.edu.pk/api/plugins/telemetry/DEVICE/"
 
@@ -29,7 +33,7 @@ class Command(BaseCommand):
 
             if device_id:
                 keys = "temperature,humidity,Air_Temperature,Air_Humidity,timestamp"
-                ts_params = f"&startTs={start_ts}"
+                ts_params = f"&startTs={start_ts}&endTs={endTs}"
                 url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
                 headers = {
                     "Content-Type": "application/json",
@@ -40,16 +44,18 @@ class Command(BaseCommand):
                     response = requests.get(url, headers=headers)
                     if response.status_code == 200:
                         weather_data = response.json()
-
-                        # Extract single values for Air_Temp and Air_Humidity
                         air_temp_value = weather_data.get("Air_Temperature", [{}])[0].get("value")
                         air_humidity_value = weather_data.get("Air_Humidity", [{}])[0].get("value")
                         print("event")
-                        # Save the extracted values directly to weather_station
-                        Event.objects.filter(pk=event.pk).update(weather_station={
-                            "Air_Temp": air_temp_value,
-                            "Air_Humidity": air_humidity_value,
-                        })
+                        print(air_humidity_value)
+                        print(air_temp_value)
+
+                        if air_temp_value is not None and air_humidity_value is not None:
+
+                            Event.objects.filter(pk=event.pk).update(weather_station={
+                                "Air_Temp": air_temp_value,
+                                "Air_Humidity": air_humidity_value,
+                            })
 
                 except requests.RequestException as e:
                     print(f"Error fetching weather data for event {event.uuid}: {e}")
