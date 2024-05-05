@@ -2,13 +2,12 @@ import os
 
 import cv2
 import imageio
+import requests
 from django.conf import settings
 from django.core.files import File
 from django_cron import CronJobBase, Schedule
 
 from core.models import Image, BoundingBox, Event
-from core.sms_utils import send_sms
-
 
 class ProcessEventsCronJob(CronJobBase):
     RUN_EVERY_MINS = 1
@@ -60,5 +59,11 @@ class ProcessEventsCronJob(CronJobBase):
 
     def sms_sender(self, event, **kwargs):
         if event.species.filter(endangered=True).exists() and not event.sms_sent:
-            if event.camera.contact_no and send_sms(event):
+            if event.camera.contact_no and self.send_sms(event):
                 event.sms_sent = True
+
+    def send_sms(self, event):
+        text = f"Camera Node ({event.camera.description}) detected {', '.join(event.species.values_list('name', flat=True))}" \
+               f". Go to the following link to see the generated event\n https://api.forestwatch.org.pk{event.file.url}"
+        resp = requests.get(f'http://203.135.63.37:8004/', headers={'Content-Type': 'application/json'}, params={"number": event.camera.contact_no, "text": text})
+        return True if resp.status_code == 200 else False
