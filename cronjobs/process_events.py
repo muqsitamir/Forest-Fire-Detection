@@ -63,7 +63,7 @@ class ProcessEventsCronJob(CronJobBase):
                 event.sms_sent = True
 
     def send_sms(self, event):
-        text = f"Camera Node ({event.camera.description}) detected {', '.join(event.species.values_list('name', flat=True))}" \
-               f". Go to the following link to see the generated event\n https://api.forestwatch.org.pk{event.file.url}"
+        text = f"{event.camera.description} detected {', '.join(event.species.values_list('name', flat=True))}" \
+               f": https://api.forestwatch.org.pk{event.file.url}"
         resp = requests.get(f'http://203.135.63.37:8004/', headers={'Content-Type': 'application/json'}, params={"number": event.camera.contact_no, "text": text})
         return True if resp.status_code == 200 else False
