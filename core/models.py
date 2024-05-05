@@ -1,16 +1,18 @@
 from datetime import datetime
+import time
 from signal import *
-
+from django.core.cache import cache
+from django.core.exceptions import SuspiciousOperation
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from fcm_django.models import FCMDevice
-
 from core import fields
 from core.storage import OverwriteStorage
 import requests
+from django.utils import timezone
 User = get_user_model()
 
 
@@ -102,7 +104,7 @@ class Camera(models.Model):
     tower = models.ForeignKey(Tower, on_delete=models.CASCADE, null=True)
     live_image = fields.CustomImageField(storage=OverwriteStorage(), upload_to='liveimages', unique=True, null=True,
                                          blank=True)
-
+    live_stream_url = models.CharField(max_length=100, blank=True)
     # yolo parameters
     confidence_threshold = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)], default=0.2)
 
@@ -223,7 +225,7 @@ class Event(models.Model):
     status = models.CharField(max_length=20, choices=STATUS, default=NONE)
     weather_data = models.JSONField(null=True, blank=True)
     nasa_tag = models.BooleanField(default=False)
-
+    weather_station = models.JSONField(null=True, blank=True)
     class Meta:
         ordering = ('-created_at',)
 
@@ -234,24 +236,98 @@ class Event(models.Model):
         return str(self.uuid)
 
     def save(self, *args, **kwargs):
-        self.weather_data = self.get_weather_data()
+        if self.weather_data is None:
+            rate_limit_result = self.check_weather_api_rate_limit()
+            if rate_limit_result != "OK":
+                raise SuspiciousOperation(rate_limit_result)
+
+            self.weather_data = self.get_weather_data()
+        if self.weather_station is None:
+            self.weather_station = self.check_weather_station_api()
         super().save(*args, **kwargs)
 
+    def check_weather_station_api(self):
+        current_time = timezone.now()
+        print(self.created_at)
+        start_ts = int(current_time.timestamp()) * 1000
+        device_id =""
+        base_url = "http://icarus.lums.edu.pk/api/plugins/telemetry/DEVICE/"
+        print(self.camera_id)
+        if self.camera_id == 5:
+            device_id = "c721d8c0-3a21-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 3:
+            device_id = "8a86c4b0-3cb1-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 6:
+            device_id = "9c4c6f10-30db-11ee-9dc2-07b8268a3068"
+        elif self.camera_id == 7:
+            device_id = "9e6f1ab0-3a20-11ee-9dc2-07b8268a3068"
+        if device_id:
+         keys = "Air_Temperature,Air_Humidity"
+         ts_params = f"&startTs={start_ts}"
+         url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
+         headers = {
+            "Content-Type": "application/json",
+            "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6ImEwOTY4ZWNiLWZjNTAtNDI1NS1hYzg5LTkwZGExOTlhYTRkMSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE0OTAzMjA4LCJleHAiOjE3MTU1MDc5MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.pZ7grT7r_f-Xn12XjZamK59g_qJVHvFKU1QWjj9ojy8MiyaiULNtWx8J-D1cPurAm6kR6tsLvHwlO3iCzZaK3Q"
+         }
+         print(url)
+         try:
+            response = requests.get(url, headers=headers)
+            print(response.status_code)
+            if response.status_code == 200:
+                weather_data = response.json()
+                print(weather_data)
+                if weather_data:
+                    air_temp_value = weather_data.get("Air_Temperature", [{}])[0].get("value")
+                    air_humidity_value = weather_data.get("Air_Humidity", [{}])[0].get("value")
+
+                    self.weather_station = {
+                        "Air_Temp": air_temp_value,
+                        "Air_Humidity": air_humidity_value,
+                    }
+                    return self.weather_station
+         except requests.RequestException as e:
+            print(f"Error fetching weather data: {e}")
+            return 'null'
+
+
+    def check_weather_api_rate_limit(self):
+        daily_key = "weather_api_daily"
+        cache.add(daily_key, 0)
+        print("in limit function")
+        daily_count = cache.get(daily_key, 0)
+        if daily_count >= 900:
+            return "Daily API call limit exceeded"
+
+        current_timestamp = int(time.time())
+        minute_key = "weather_api_minute"
+        cache.add(minute_key, 0)
+        minute_count = cache.get(minute_key, 0, )
+        if (current_timestamp - cache.get("last_api_call_timestamp", 0)) < 60 and minute_count >= 55:
+            return "API call limit exceeded for this minute"
+
+        cache.incr(daily_key)
+        cache.incr(minute_key)
+        cache.set("last_api_call_timestamp", current_timestamp)
+
+        return "OK"
+
     def get_weather_data(self):
+
         if self.date and self.camera:
-            api_key = 'e39776ce233e18ced07d61cbc6dbe2a1'
+            api_key = 'fd4cb04cf440021f2d0fca118aa89858'
             date = self.date
             longitude = self.camera.longitude
             latitude = self.camera.latitude
-
+            print("in get_weather_data function")
             unix_timestamp = int(date.timestamp())
 
             url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={latitude}&lon={longitude}&dt={unix_timestamp}&appid={api_key}'
 
             response = requests.get(url)
-
+            print(response.status_code)
             if response.status_code == 200:
                 weather_data = response.json()
+                print(weather_data)
                 return weather_data
             else:
                 return "N/A"
@@ -315,3 +391,22 @@ def event_delete(sender, instance, **kwargs):
 def set_uploaded_at(sender, instance, **kwargs):
     instance.camera.last_uploaded_at = datetime.now()
     instance.camera.save()
+
+
+
+class PTZCameraPreset(models.Model):
+    camera_id = models.CharField(max_length=50)
+    name = models.CharField(max_length=255)
+    zoom_min = models.FloatField()
+    zoom_max = models.FloatField()
+    zoom_default = models.FloatField()
+    pan_min = models.FloatField()
+    pan_max = models.FloatField()
+    pan_default = models.FloatField()
+    tilt_min = models.FloatField()
+    tilt_max = models.FloatField()
+    tilt_default = models.FloatField()
+    description=models.CharField(max_length=500, blank=True)
+
+    def __str__(self):
+        return f"{self.camera_id} - {self.name}"

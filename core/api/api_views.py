@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from time import sleep
-
+from django.utils import timezone
 import json
 import paho.mqtt.client as mqtt
 import certifi
@@ -29,15 +29,16 @@ from rest_framework.response import Response
 
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
-    ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower
+    ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer, \
+    PTZCameraPresetSerializer
+from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset
 from core.notifications import send_push_notification
 
 
 class DynamicPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
-    max_page_size = 100
+    max_page_size = 1000
 
 
 class TowerViewSet(viewsets.ModelViewSet):
@@ -76,6 +77,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
+        # Get date range from filter parameters
         if not self.request.user.is_superuser:
             # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
             qs = qs.filter(Q(species="vehicle") | Q(species="animal") | Q(species="person")).filter(
@@ -168,6 +170,13 @@ class ImageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ImageFilterSet
+
+    def get_queryset(self):
+        event_uuid = self.request.query_params.get('event')
+        if event_uuid:
+            return Image.objects.filter(event__uuid=event_uuid).order_by('date')
+        else:
+            return Image.objects.none()
 
     def create(self, request, *args, **kwargs):
         try:
@@ -308,7 +317,6 @@ class CameraViewSet(viewsets.ModelViewSet):
         tilt = request.data["tilt"]
         zoom = request.data["zoom"]
         camera = request.data["camera"]
-
         client = mqtt.client.Client(clean_session=True, transport="tcp")
         client.tls_set(ca_certs=certifi.where())
 
@@ -328,6 +336,36 @@ class CameraViewSet(viewsets.ModelViewSet):
         client.loop_stop()
         return Response(json.dumps({"data": self.res}))
 
+    @action(methods=['post'], detail=False)
+    def ptzControlsOn(self, request):
+        pan = request.data["pan"]
+        tilt = request.data["tilt"]
+        zoom = request.data["zoom"]
+        camera = request.data["camera"]
+        power = request.data.get("power", "on")
+        message = request.data["message"]
+        client = mqtt.client.Client(clean_session=True, transport="tcp")
+        client.tls_set(ca_certs=certifi.where())
+
+        client.on_publish = self.on_publish
+        client.on_connect = self.on_connect
+        client.on_log = self.on_log
+
+        host = "2be1374228c54154bc14422981467fff.s2.eu.hivemq.cloud"
+        client.username_pw_set("admin", "Lumsadmin@n1")
+        client.connect(host, 8883, 60)
+        client.loop_start()
+        client.publish(f"{camera}/PAN", pan, 1)
+        client.publish(f"{camera}/TILT", tilt, 1)
+        client.publish(f"{camera}/ZOOM", zoom, 1)
+        if power.lower() == "on":
+            client.publish(f"{camera}/POWER", "ON", 1)
+        elif power.lower() == "off":
+            client.publish(f"{camera}/POWER", "OFF", 1)
+        sleep(1)
+        client.disconnect()
+        client.loop_stop()
+        return Response(json.dumps({"data": self.res}))
     @action(methods=['POST'], detail=False)
     def live_update(self, request, *args, **kwargs):
         cam_id = request.POST['cam_id']
@@ -366,4 +404,29 @@ class LogViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class PTZCameraPresetListCreateAPIView(viewsets.ModelViewSet):
+    queryset = PTZCameraPreset.objects.all()
+    serializer_class = PTZCameraPresetSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
+    queryset = PTZCameraPreset.objects.all()
+    serializer_class = PTZCameraPresetSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        camera_id = self.request.query_params.get('camera_id')
+        if camera_id is not None:
+            queryset = queryset.filter(camera_id=camera_id)
+        return queryset
+
 

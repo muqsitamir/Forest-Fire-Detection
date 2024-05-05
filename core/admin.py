@@ -4,7 +4,7 @@ from django.urls import reverse
 from import_export.admin import ExportActionMixin
 from django.utils.timezone import localtime
 from core.filters import SpecieFilter, CameraFilter
-from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor
+from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset
 
 
 class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
@@ -41,7 +41,7 @@ class CameraAdmin(admin.ModelAdmin):
     actions = ['turn_logging_on', 'turn_logging_off', 'start_capture', 'stop_capturing']
 
     fieldsets = [
-        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower', 'live_image',]}),
+        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower', 'live_image','live_stream_url']}),
         ('Stats', {'fields': ['last_reported_at', 'remaining_storage']}),
         ('Capture Settings', {'fields': ['frames_per_sec', 'image_width', 'image_height', 'roi_mask']}),
         ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold', 'confidence_threshold']}),
@@ -116,6 +116,10 @@ class LogAdmin(ExportActionMixin, admin.ModelAdmin):
 
     logged_at_sec.short_description = 'Logged At'
 
+class PTZCameraPresetAdmin(admin.ModelAdmin):
+    list_display = ('camera_id', 'name', 'zoom_min', 'zoom_max', 'zoom_default', 'pan_min', 'pan_max', 'pan_default', 'tilt_min', 'tilt_max', 'tilt_default','description')
+    list_filter = ('camera_id', 'name')
+    search_fields = ('camera_id', 'name')
 
 admin.site.register(Camera, CameraAdmin)
 admin.site.register(Image, ImageAdmin)
@@ -125,4 +129,6 @@ admin.site.register(BoundingBox, BoundingBoxAdmin)
 admin.site.register(Log, LogAdmin)
 admin.site.register(Tower, TowerAdmin)
 admin.site.register(Sensor, SensorAdmin)
+admin.site.register(PTZCameraPreset, PTZCameraPresetAdmin)
+
 

@@ -96,6 +96,18 @@ CRON_CLASSES = [
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
        'http://127.0.0.1:8000',
+       'https://forestwatch.org.pk',
+)
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:3000',
+    "https://forestwatch.org.pk",
+]
+CORS_PREFLIGHT_MAX_AGE = 86400  # 1 day
+
+CORS_ALLOW_HEADERS = (
+    'access-control-allow-origin',
+    'content-type',
+    'authorization',
 )
 
 REST_FRAMEWORK = {
@@ -225,3 +237,5 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'lumscameratrap@gmail.com'
 EMAIL_HOST_PASSWORD = 'xzwr fguu icqv jxlv'
 DEFAULT_FROM_EMAIL = "lumscameratrap@gmail.com"
+
+
