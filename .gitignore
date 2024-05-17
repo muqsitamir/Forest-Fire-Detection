@@ -4,7 +4,6 @@
 /.idea/
 /__pycache__/__init__.cpython-37.pyc
 *.pyc
-*.csv
 media
 db.sqlite3
 package-lock.json
