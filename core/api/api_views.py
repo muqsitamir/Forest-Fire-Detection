@@ -30,8 +30,8 @@ from rest_framework.response import Response
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer, \
-    PTZCameraPresetSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset
+    PTZCameraPresetSerializer, EventCountSerializer
+from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset, EventCount
 from core.notifications import send_push_notification
 
 
@@ -377,7 +377,28 @@ class CameraViewSet(viewsets.ModelViewSet):
         fs.save(f'cam_{cam_id}_live_image', live_image)
         return Response({'message': f'live image updated for camera {cam_id}'}, status=status.HTTP_200_OK)
 
+class EventCountViewSet(viewsets.ModelViewSet):
+    queryset = EventCount.objects.all()
+    serializer_class = EventCountSerializer
 
+    @action(methods=['POST'], detail=False)
+    def delete_events(self, request, *args, **kwargs):
+        events = request.data.get('events', [])
+        events = Event.objects.filter(uuid__in=events)
+        events.delete()
+
+        # Update EventCount after deletion
+        updated_event_count = Event.objects.count()
+        event_count_instance, _ = EventCount.objects.get_or_create(
+            id=1)  # Assuming there's only one instance of EventCount
+        event_count_instance.count = updated_event_count
+        event_count_instance.save()
+
+        return Response({'message': 'Deleted events and updated EventCount'}, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'message': 'EventCount deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 class OrganizationViewSet(generics.RetrieveAPIView):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer

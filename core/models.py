@@ -202,6 +202,78 @@ class BoundingBox(models.Model):
     def __str__(self):
         return f'{self.specie}: {self.image.id} | {self.image.file}'
 
+class EventCount(models.Model):
+    camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
+    total_event_count = models.IntegerField(default=0)
+    total_night_event_count = models.IntegerField(default=0)
+    total_day_event_count = models.IntegerField(default=0)
+    fire_day_event_count = models.IntegerField(default=0)
+    smoke_night_event_count = models.IntegerField(default=0)
+    fire_night_event_count = models.IntegerField(default=0)
+    smoke_day_event_count = models.IntegerField(default=0)
+    night_event_with_more_than_one_species = models.IntegerField(default=0)
+    day_event_with_more_than_one_species = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"EventCount for Camera {self.camera.id}"
+
+    @staticmethod
+    def update_event_counts(camera_id):
+        try:
+            camera = Camera.objects.get(id=camera_id)
+        except Camera.DoesNotExist:
+            raise ValueError("Camera with the specified ID does not exist")
+
+        event_count, created = EventCount.objects.get_or_create(camera=camera)
+
+        events = Event.objects.filter(camera=camera)
+        total_event_count = events.count()
+        total_night_event_count = 0
+        total_day_event_count = 0
+        fire_day_event_count = 0
+        smoke_night_event_count = 0
+        fire_night_event_count = 0
+        smoke_day_event_count = 0
+        night_event_with_more_than_one_species = 0
+        day_event_with_more_than_one_species = 0
+
+        for event in events:
+            created_at = event.created_at
+            is_night = created_at.time() < event.camera.sunrise.time() or created_at.time() > event.camera.sunset.time()
+
+            species_count = event.species.count()
+            has_more_than_one_species = species_count > 1
+
+            if is_night:
+                total_night_event_count += 1
+                if has_more_than_one_species:
+                    night_event_with_more_than_one_species += 1
+
+                if event.is_fire:
+                    fire_night_event_count += 1
+                if event.is_smoke:
+                    smoke_night_event_count += 1
+            else:
+                total_day_event_count += 1
+                if has_more_than_one_species:
+                    day_event_with_more_than_one_species += 1
+
+                if event.is_fire:
+                    fire_day_event_count += 1
+                if event.is_smoke:
+                    smoke_day_event_count += 1
+
+        event_count.total_event_count = total_event_count
+        event_count.total_night_event_count = total_night_event_count
+        event_count.total_day_event_count = total_day_event_count
+        event_count.fire_day_event_count = fire_day_event_count
+        event_count.smoke_night_event_count = smoke_night_event_count
+        event_count.fire_night_event_count = fire_night_event_count
+        event_count.smoke_day_event_count = smoke_day_event_count
+        event_count.night_event_with_more_than_one_species = night_event_with_more_than_one_species
+        event_count.day_event_with_more_than_one_species = day_event_with_more_than_one_species
+
+        event_count.save()
 
 class Event(models.Model):
     FEATURED = "FEATURED"
@@ -235,7 +307,11 @@ class Event(models.Model):
     def __str__(self):
         return str(self.uuid)
 
+    def day(self):
+        return self.created_at.date()
+
     def save(self, *args, **kwargs):
+
         if self.weather_data is None:
             rate_limit_result = self.check_weather_api_rate_limit()
             if rate_limit_result != "OK":
@@ -245,6 +321,9 @@ class Event(models.Model):
         if self.weather_station is None:
             self.weather_station = self.check_weather_station_api()
         super().save(*args, **kwargs)
+
+
+        EventCount.update_event_counts(self.camera.id)
 
     def check_weather_station_api(self):
         current_time = timezone.now()
@@ -267,7 +346,7 @@ class Event(models.Model):
          url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
          headers = {
             "Content-Type": "application/json",
-            "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjY2NTU5NzYxLTQzZTgtNGYxZC1iNzEzLWRkMjYxYjRlNTMwYyIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE2MDQ5NjEyLCJleHAiOjE3MTY2NTQzMTIsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.Y_RJ3_lrPUGDFRqgEbZW0MjdJw3Y0HnouNYvrPesoBp62ORjKGI42fzQmCCk1Ljor2vKW66EKgnG3cy7F7KYmA"
+            "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjUxMmU4MWI5LTdjMDctNGFiNy05YWEyLTMzMDhjYzMxYTlhZSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE3NTMwNzA4LCJleHAiOjE3MTgxMzU0MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.ZdJtV-8sTqYwAcbPFu966QHinT3h_jEWvxSOjF_HUzYsLO9geKnBrYko-k_AH8MkmCABYTnLMtVQwbon-4qHDg"
          }
          print(url)
          try:
@@ -333,6 +412,10 @@ class Event(models.Model):
                 return "N/A"
         else:
             return "N/A"
+
+    def update_event_counts_after_delete(sender, instance, **kwargs):
+        camera_id = instance.camera.id
+        EventCount.update_event_counts(camera_id)
 
 
 class Log(models.Model):

@@ -4,7 +4,8 @@ from django.urls import reverse
 from import_export.admin import ExportActionMixin
 from django.utils.timezone import localtime
 from core.filters import SpecieFilter, CameraFilter
-from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset
+from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset, \
+    EventCount
 
 
 class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
@@ -121,9 +122,20 @@ class PTZCameraPresetAdmin(admin.ModelAdmin):
     list_filter = ('camera_id', 'name')
     search_fields = ('camera_id', 'name')
 
+class EventCountAdmin(admin.ModelAdmin):
+    list_display = (
+        'camera', 'total_event_count', 'total_night_event_count', 'total_day_event_count',
+        'fire_night_event_count', 'smoke_night_event_count', 'fire_day_event_count',
+        'smoke_day_event_count', 'night_event_with_more_than_one_species', 'day_event_with_more_than_one_species'
+    )
+    list_filter = ('camera',)
+    search_fields = ('camera__id', 'camera__description')
+
+
 admin.site.register(Camera, CameraAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(Event, EventAdmin)
+admin.site.register(EventCount,EventCountAdmin)
 admin.site.register(Specie, SpecieAdmin)
 admin.site.register(BoundingBox, BoundingBoxAdmin)
 admin.site.register(Log, LogAdmin)

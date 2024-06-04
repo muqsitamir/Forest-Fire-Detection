@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from accounts.models import Organization
-from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event, Tower, Sensor, PTZCameraPreset
+from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event, Tower, Sensor, PTZCameraPreset, \
+    EventCount
 
 
 class SpecieSerializer(serializers.ModelSerializer):
@@ -92,6 +93,11 @@ class CameraListSerializer(serializers.ModelSerializer):
         model = Camera
         fields = ('id', 'test', 'live', 'should_log', 'description', 'created_at', 'last_reported_at', 'remaining_storage')
 
+
+class EventCountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventCount
+        fields = '__all__'
 
 class OrganizationSerializer(serializers.ModelSerializer):
     cameras = serializers.SerializerMethodField(read_only=True)
