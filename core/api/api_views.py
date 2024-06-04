@@ -381,16 +381,13 @@ class EventCountViewSet(viewsets.ModelViewSet):
     queryset = EventCount.objects.all()
     serializer_class = EventCountSerializer
 
-    @action(detail=False, methods=['get'])
     def get_queryset(self):
-        camera_id = self.request.query_params.get('camera_id')
+        # Assuming you have a request parameter 'camera_id' that specifies the camera ID
+        camera_id = self.request.query_params.get('camera')
         if camera_id:
-            event_count = EventCount.objects.filter(camera_id=camera_id).first()
-            if event_count:
-                serializer = self.get_serializer(event_count)
-                return Response(serializer.data)
-            return Response({'error': 'Event count not found for this camera ID'}, status=404)
-        return Response({'error': 'Camera ID is required as query parameter'}, status=400)
+            return EventCount.objects.filter(camera=camera_id)
+        else:
+            return EventCount.objects.all()
 
     @action(methods=['POST'], detail=False)
     def delete_events(self, request, *args, **kwargs):
