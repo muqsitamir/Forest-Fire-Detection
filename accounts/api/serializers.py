@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from djoser.conf import settings as djo
 from djoser.serializers import TokenSerializer, UserSerializer
 from rest_framework import serializers
-
+from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 
@@ -27,11 +27,12 @@ class CustomTokenSerializer(TokenSerializer):
         fields = ("auth_token", "user")
 
 class PasswordResetSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
 
 class PasswordChangeSerializer(serializers.Serializer):
-    old_password = serializers.CharField()
-    new_password = serializers.CharField(validators=[validate_password])
+    username = serializers.CharField(required=True)
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
 
     def validate_old_password(self, value):
         user = self.context['request'].user
