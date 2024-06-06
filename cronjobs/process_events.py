@@ -6,8 +6,8 @@ import requests
 from django.conf import settings
 from django.core.files import File
 from django_cron import CronJobBase, Schedule
-
 from core.models import Image, BoundingBox, Event
+
 
 class ProcessEventsCronJob(CronJobBase):
     RUN_EVERY_MINS = 1
@@ -34,7 +34,7 @@ class ProcessEventsCronJob(CronJobBase):
                         image_data = imageio.imread(image.file.path)
 
                         for box in BoundingBox.objects.filter(image=image):
-                            height, width = image_data.shape[:2]
+                            # height, width = image_data.shape[:2]
                             x, y, x2, y2 = int(box.x), int(box.y), int(box.width), int(
                                 box.height)
                             image_data = cv2.rectangle(image_data, (x, y), (x2, y2), (0, 0, 255), 2)
@@ -53,9 +53,12 @@ class ProcessEventsCronJob(CronJobBase):
 
             os.remove(f'{settings.MEDIA_ROOT}/temp/{event.uuid}.gif')
             os.remove(f'{settings.MEDIA_ROOT}/temp/{event.uuid}_thumb.gif')
-            self.sms_sender(event)
             event.save()
             images_qs.update(included=True)
+            try:
+                self.sms_sender(event)
+            except Exception as e:
+                continue
 
     def sms_sender(self, event, **kwargs):
         if event.species.filter(endangered=True).exists() and not event.sms_sent:

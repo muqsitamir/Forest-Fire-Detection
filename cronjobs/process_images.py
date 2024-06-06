@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from django_cron import CronJobBase, Schedule
 
-from core.models import Image, Log, BoundingBox, Specie
+from core.models import Image, Log, BoundingBox
 from core.utils import is_dont_care
 
 
