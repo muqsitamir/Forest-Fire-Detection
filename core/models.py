@@ -13,6 +13,7 @@ from core import fields
 from core.storage import OverwriteStorage
 import requests
 from django.utils import timezone
+
 User = get_user_model()
 
 
@@ -202,6 +203,7 @@ class BoundingBox(models.Model):
     def __str__(self):
         return f'{self.specie}: {self.image.id} | {self.image.file}'
 
+
 class EventCount(models.Model):
     camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
     total_event_count = models.IntegerField(default=0)
@@ -217,63 +219,7 @@ class EventCount(models.Model):
     def __str__(self):
         return f"EventCount for Camera {self.camera.id}"
 
-    @staticmethod
-    def update_event_counts(camera_id):
-        try:
-            camera = Camera.objects.get(id=camera_id)
-        except Camera.DoesNotExist:
-            raise ValueError("Camera with the specified ID does not exist")
 
-        event_count, created = EventCount.objects.get_or_create(camera=camera)
-
-        events = Event.objects.filter(camera=camera)
-        total_event_count = events.count()
-        total_night_event_count = 0
-        total_day_event_count = 0
-        fire_day_event_count = 0
-        smoke_night_event_count = 0
-        fire_night_event_count = 0
-        smoke_day_event_count = 0
-        night_event_with_more_than_one_species = 0
-        day_event_with_more_than_one_species = 0
-
-        for event in events:
-            created_at = event.created_at
-            is_night = created_at.time() < event.camera.sunrise.time() or created_at.time() > event.camera.sunset.time()
-
-            species_count = event.species.count()
-            has_more_than_one_species = species_count > 1
-
-            if is_night:
-                total_night_event_count += 1
-                if has_more_than_one_species:
-                    night_event_with_more_than_one_species += 1
-
-                if event.is_fire:
-                    fire_night_event_count += 1
-                if event.is_smoke:
-                    smoke_night_event_count += 1
-            else:
-                total_day_event_count += 1
-                if has_more_than_one_species:
-                    day_event_with_more_than_one_species += 1
-
-                if event.is_fire:
-                    fire_day_event_count += 1
-                if event.is_smoke:
-                    smoke_day_event_count += 1
-
-        event_count.total_event_count = total_event_count
-        event_count.total_night_event_count = total_night_event_count
-        event_count.total_day_event_count = total_day_event_count
-        event_count.fire_day_event_count = fire_day_event_count
-        event_count.smoke_night_event_count = smoke_night_event_count
-        event_count.fire_night_event_count = fire_night_event_count
-        event_count.smoke_day_event_count = smoke_day_event_count
-        event_count.night_event_with_more_than_one_species = night_event_with_more_than_one_species
-        event_count.day_event_with_more_than_one_species = day_event_with_more_than_one_species
-
-        event_count.save()
 
 class Event(models.Model):
     FEATURED = "FEATURED"
@@ -298,6 +244,7 @@ class Event(models.Model):
     weather_data = models.JSONField(null=True, blank=True)
     nasa_tag = models.BooleanField(default=False)
     weather_station = models.JSONField(null=True, blank=True)
+
     class Meta:
         ordering = ('-created_at',)
 
@@ -320,16 +267,85 @@ class Event(models.Model):
             self.weather_data = self.get_weather_data()
         if self.weather_station is None:
             self.weather_station = self.check_weather_station_api()
+        self.update_event_counts()
         super().save(*args, **kwargs)
 
+    def update_event_counts(self):
+        event_count, created = EventCount.objects.get_or_create(camera=self.camera)
+        try:
+            event = Event.objects.filter(camera=self.camera).latest('created_at')
+            total_event_count = event_count.total_event_count
+            total_night_event_count = event_count.total_night_event_count
+            total_day_event_count = event_count.total_day_event_count
+            fire_day_event_count = event_count.fire_day_event_count
+            smoke_night_event_count = event_count.smoke_night_event_count
+            fire_night_event_count = event_count.fire_night_event_count
+            smoke_day_event_count = event_count.smoke_day_event_count
+            night_event_with_more_than_one_species = event_count.night_event_with_more_than_one_species
+            day_event_with_more_than_one_species = event_count.day_event_with_more_than_one_species
+            created_at = event.created_at
+            print(created_at)
+            is_night = created_at.time().hour >=18 or created_at.time().hour <= 6
+             # Retrieve all related species objects
+            species_list = event.species.all()
+            print(species_list.count())
+            for species in species_list:
+                print(species.id)
+            has_more_than_one_species = species_list.count() > 1
 
-        EventCount.update_event_counts(self.camera.id)
+            if is_night:
+                total_night_event_count += 1
+                if has_more_than_one_species:
+                    night_event_with_more_than_one_species += 1
 
+
+                # Check each species in the event
+                for species in species_list:
+                    print(species.id)
+                    if species.id == 'fire':
+                        fire_night_event_count += 1
+                    if species.id == 'smoke':
+                        smoke_night_event_count += 1
+            else:
+                total_day_event_count += 1
+                if has_more_than_one_species:
+                    day_event_with_more_than_one_species += 1
+
+                # Check each species in the event
+                for species in species_list:
+                    if species.id == 'fire':
+                        fire_day_event_count += 1
+                    if species.id == 'smoke':
+                        smoke_day_event_count += 1
+        except Event.DoesNotExist:
+            raise ValueError("Event with the specified UUID does not exist")
+        total_event_count += 1
+        event_count.total_event_count = total_event_count
+        event_count.total_night_event_count = total_night_event_count
+        event_count.total_day_event_count = total_day_event_count
+        event_count.fire_day_event_count = fire_day_event_count
+        event_count.smoke_night_event_count = smoke_night_event_count
+        event_count.fire_night_event_count = fire_night_event_count
+        event_count.smoke_day_event_count = smoke_day_event_count
+        event_count.night_event_with_more_than_one_species = night_event_with_more_than_one_species
+        event_count.day_event_with_more_than_one_species = day_event_with_more_than_one_species
+
+        print("Total night events:", total_night_event_count)
+        print("Night events with more than one species:", night_event_with_more_than_one_species)
+        print("Fire night events:", fire_night_event_count)
+        print("Smoke night events:", smoke_night_event_count)
+
+        print("Total day events:", total_day_event_count)
+        print("Day events with more than one species:", day_event_with_more_than_one_species)
+        print("Fire day events:", fire_day_event_count)
+        print("Smoke day events:", smoke_day_event_count)
+
+        event_count.save()
     def check_weather_station_api(self):
         current_time = timezone.now()
         print(self.created_at)
         start_ts = int(current_time.timestamp()) * 1000
-        device_id =""
+        device_id = ""
         base_url = "http://icarus.lums.edu.pk/api/plugins/telemetry/DEVICE/"
         print(self.camera_id)
         if self.camera_id == 5:
@@ -341,33 +357,33 @@ class Event(models.Model):
         elif self.camera_id == 7:
             device_id = "9e6f1ab0-3a20-11ee-9dc2-07b8268a3068"
         if device_id:
-         keys = "Air_Temperature,Air_Humidity"
-         ts_params = f"&startTs={start_ts}"
-         url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
-         headers = {
-            "Content-Type": "application/json",
-            "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjUxMmU4MWI5LTdjMDctNGFiNy05YWEyLTMzMDhjYzMxYTlhZSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE3NTMwNzA4LCJleHAiOjE3MTgxMzU0MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.ZdJtV-8sTqYwAcbPFu966QHinT3h_jEWvxSOjF_HUzYsLO9geKnBrYko-k_AH8MkmCABYTnLMtVQwbon-4qHDg"
-         }
-         print(url)
-         try:
-            response = requests.get(url, headers=headers)
-            print(response.status_code)
-            if response.status_code == 200:
-                weather_data = response.json()
-                print(weather_data)
-                if weather_data:
-                    air_temp_value = weather_data.get("Air_Temperature", [{}])[0].get("value")
-                    air_humidity_value = weather_data.get("Air_Humidity", [{}])[0].get("value")
+            keys = "Air_Temperature,Air_Humidity"
+            ts_params = f"&startTs={start_ts}"
+            url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
+            headers = {
+                "Content-Type": "application/json",
+                "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjUxMmU4MWI5LTdjMDctNGFiNy05YWEyLTMzMDhjYzMxYTlhZSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE3NTMwNzA4LCJleHAiOjE3MTgxMzU0MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.ZdJtV-8sTqYwAcbPFu966QHinT3h_jEWvxSOjF_HUzYsLO9geKnBrYko-k_AH8MkmCABYTnLMtVQwbon-4qHDg"
+            }
+            print(url)
+            try:
+                response = requests.get(url, headers=headers)
+                print(response.status_code)
+                if response.status_code == 200:
+                    weather_data = response.json()
+                    print(weather_data)
+                    if weather_data:
+                        air_temp_value = weather_data.get("Air_Temperature", [{}])[0].get("value")
+                        air_humidity_value = weather_data.get("Air_Humidity", [{}])[0].get("value")
 
-                    self.weather_station = {
-                        "Air_Temp": air_temp_value,
-                        "Air_Humidity": air_humidity_value,
-                    }
-                    return self.weather_station
-         except requests.RequestException as e:
-            print(f"Error fetching weather data: {e}")
-            return 'null'
+                        self.weather_station = {
+                            "Air_Temp": air_temp_value,
+                            "Air_Humidity": air_humidity_value,
+                        }
 
+                        return self.weather_station
+            except requests.RequestException as e:
+                print(f"Error fetching weather data: {e}")
+                return 'null'
 
     def check_weather_api_rate_limit(self):
         daily_key = "weather_api_daily"
@@ -476,7 +492,6 @@ def set_uploaded_at(sender, instance, **kwargs):
     instance.camera.save()
 
 
-
 class PTZCameraPreset(models.Model):
     camera_id = models.CharField(max_length=50)
     name = models.CharField(max_length=255)
@@ -489,7 +504,7 @@ class PTZCameraPreset(models.Model):
     tilt_min = models.FloatField()
     tilt_max = models.FloatField()
     tilt_default = models.FloatField()
-    description=models.CharField(max_length=500, blank=True)
+    description = models.CharField(max_length=500, blank=True)
 
     def __str__(self):
         return f"{self.camera_id} - {self.name}"
