@@ -148,7 +148,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'forest_fire',
         'USER': 'root',
-        'PASSWORD': 'arbisoft',
+        'PASSWORD': 'fif_607_taj',
         'HOST': '139.162.11.234',
         'PORT': '3306',
     }
