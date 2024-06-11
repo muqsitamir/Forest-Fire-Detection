@@ -5,7 +5,6 @@ from django.conf import settings
 from django_cron import CronJobBase, Schedule
 
 
-
 class DownloadKMZCronJob(CronJobBase):
     RUN_EVERY_MINS = 60 * 24
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)

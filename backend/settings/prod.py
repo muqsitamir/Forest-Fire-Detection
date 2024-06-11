@@ -24,7 +24,7 @@ SECRET_KEY = 'hu&_2(m@8zt3_m7rgihu6za5ed47vxt#f9m&-ds^i+&55fn3q0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['172.105.61.72', 'api.forestwatch.org.pk', "139-162-11-234.ip.linodeusercontent.com"]
+ALLOWED_HOSTS = ['172.105.61.72', 'api.forestwatch.org.pk']
 
 ALLOWED_HOSTS += ['127.0.0.1', '192.168.0.12', "139.162.11.234"]
 # Application definition
@@ -149,7 +149,7 @@ DATABASES = {
         'NAME': 'forest_fire',
         'USER': 'root',
         'PASSWORD': 'arbisoft',
-        'HOST': '139-162-11-234.ip.linodeusercontent.com',
+        'HOST': '139.162.11.234',
         'PORT': '3306',
     }
 }

@@ -11,6 +11,7 @@ from core.models import Camera
 import geopy.distance
 from django_cron import CronJobBase, Schedule
 
+
 class ParseKMZCronJob(BaseCommand):
     RUN_EVERY_MINS = 60 * 24
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
