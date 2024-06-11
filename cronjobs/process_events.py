@@ -36,8 +36,9 @@ class ProcessEventsCronJob(CronJobBase):
                         try:
                             image_data = imageio.imread(image.file.path)
                         except FileNotFoundError as e:
-                            Log(message=f"Couldnt find processed image to include to event gif. FileNotFound: {image.file.path}", camera=image.camera,
+                            Log(message=f"Couldnt find processed image to include to event gif. FileNotFound: {image.file.path}, Marking image as included", camera=image.camera,
                                 logged_at=timezone.now(), script=Log.OTHERS, activity=Log.CAMERA_ERROR).save()
+                            images_qs.update(included=True)
                             continue
                         for box in BoundingBox.objects.filter(image=image):
                             # height, width = image_data.shape[:2]
