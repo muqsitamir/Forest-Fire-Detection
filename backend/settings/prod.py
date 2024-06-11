@@ -149,7 +149,7 @@ DATABASES = {
         'NAME': 'forest_fire',
         'USER': 'root',
         'PASSWORD': 'arbisoft',
-        'HOST': '139.162.11.234',
+        'HOST': '139-162-11-234.ip.linodeusercontent.com',
         'PORT': '3306',
     }
 }
