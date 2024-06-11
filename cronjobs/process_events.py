@@ -3,10 +3,12 @@ import os
 import cv2
 import imageio
 import requests
+from django.utils import timezone
+
 from django.conf import settings
 from django.core.files import File
 from django_cron import CronJobBase, Schedule
-from core.models import Image, BoundingBox, Event
+from core.models import Image, BoundingBox, Event, Log
 
 
 class ProcessEventsCronJob(CronJobBase):
@@ -31,8 +33,12 @@ class ProcessEventsCronJob(CronJobBase):
                                         duration=0.5) as writer:
                     images = images_qs.order_by('file')
                     for image in images:
-                        image_data = imageio.imread(image.file.path)
-
+                        try:
+                            image_data = imageio.imread(image.file.path)
+                        except FileNotFoundError as e:
+                            Log(message=f"Couldnt find processed image to include to event gif. FileNotFound: {image.file.path}", camera=image.camera,
+                                logged_at=timezone.now(), script=Log.OTHERS, activity=Log.CAMERA_ERROR).save()
+                            continue
                         for box in BoundingBox.objects.filter(image=image):
                             # height, width = image_data.shape[:2]
                             x, y, x2, y2 = int(box.x), int(box.y), int(box.width), int(
