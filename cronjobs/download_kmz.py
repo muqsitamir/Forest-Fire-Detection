@@ -3,21 +3,19 @@ import requests
 from datetime import datetime, time, timedelta
 from django.conf import settings
 from django_cron import CronJobBase, Schedule
+import logging
 
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 class DownloadKMZCronJob(CronJobBase):
-    RUN_EVERY_MINS = 60 * 24
+    RUN_EVERY_MINS = 60 * 24  # Run once every 24 hours
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'Download_KMZ_Cron_Job'
 
-    def __init__(self):
-        super().__init__()
-        self.style = None
-        self.stdout = None
-
     def do(self):
         desired_start_time = time(23, 50)
-
         current_datetime = datetime.now()
 
         time_until_start = datetime.combine(current_datetime.date(), desired_start_time) - current_datetime
@@ -25,7 +23,10 @@ class DownloadKMZCronJob(CronJobBase):
         if time_until_start.total_seconds() < 0:
             time_until_start += timedelta(days=1)
 
-        self.schedule.run_every_mins = int(time_until_start.total_seconds() / 60)
+        # Wait until the desired start time
+        if time_until_start.total_seconds() > 0:
+            logger.info(f"Waiting for {time_until_start.total_seconds()} seconds until the desired start time.")
+            return  # Exit the method to wait until the next run
 
         firms_api_url = 'https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/south_asia/24h/c6.1/FirespotArea_south_asia_c6.1_24h.kmz'
 
@@ -41,7 +42,6 @@ class DownloadKMZCronJob(CronJobBase):
         if response.status_code == 200:
             with open(output_path, 'wb') as kmz_file:
                 kmz_file.write(response.content)
-            self.stdout.write(self.style.SUCCESS(f'KMZ file downloaded successfully at: {output_path}'))
+            logger.info(f'KMZ file downloaded successfully at: {output_path}')
         else:
-            self.stdout.write(self.style.ERROR(f'Failed to download KMZ file. Status code: {response.status_code}'))
-
+            logger.error(f'Failed to download KMZ file. Status code: {response.status_code}')
