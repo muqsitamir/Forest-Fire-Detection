@@ -18,8 +18,8 @@ class ProcessImagesCronJob(CronJobBase):
 
     def do(self):
         log = False
-        # for image in Image.objects.filter(processed=False, included=False):
-        for image in Image.objects.filter(file="wwf/FF_PTZ_03/2024-08-10/1723239750632.JPG"):
+        for image in Image.objects.filter(processed=False, included=False):
+        # for image in Image.objects.filter(file="wwf/FF_PTZ_03/2024-08-10/1723239750632.JPG"):
             filename = os.path.basename(image.file.name)
             files = [
                 ('file', (filename, open(f'{settings.BASE_DIR}/media/{image.file.name}', 'rb'), 'image/png'))
