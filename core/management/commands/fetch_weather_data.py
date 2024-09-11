@@ -11,11 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         current_time = timezone.now()
-        start_time = current_time - timedelta(hours=34)  # 17 hours before current time
+        start_time = current_time - timedelta(hours=17)  # 17 hours before current time
         end_time = current_time - timedelta(hours=17)
         # Convert both start_time and current_time to timestamps in milliseconds
         start_ts = int(start_time.timestamp()) * 1000
-        end_ts = int(end_time.timestamp()) * 1000
+        end_ts = int(current_time.timestamp()) * 1000
         device_ids = {
             5: "c721d8c0-3a21-11ee-9dc2-07b8268a3068",
             3: "8a86c4b0-3cb1-11ee-9dc2-07b8268a3068",

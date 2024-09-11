@@ -36,19 +36,22 @@ class DontCareAdminInline(admin.TabularInline):
 
 
 class CameraAdmin(admin.ModelAdmin):
-    list_display = ('id', 'description', 'user', 'live', 'should_log', 'contact_no', 'latitude', 'longitude', 'confidence_threshold',)
+    list_display = (
+    'id', 'description', 'user', 'live', 'should_log', 'contact_no', 'latitude', 'longitude', 'confidence_threshold',)
     search_fields = ('id', 'latitude', 'longitude',)
     inlines = [SlotAdminInline, DontCareAdminInline]
     actions = ['turn_logging_on', 'turn_logging_off', 'start_capture', 'stop_capturing']
 
     fieldsets = [
-        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower', 'live_image','live_stream_url']}),
+        (None, {'fields': ['test', 'live', 'should_log', 'description', 'user', 'organization', 'tower', 'live_image',
+                           'live_stream_url']}),
         ('Stats', {'fields': ['last_reported_at', 'remaining_storage']}),
         ('Capture Settings', {'fields': ['frames_per_sec', 'image_width', 'image_height', 'roi_mask']}),
         ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold', 'confidence_threshold']}),
         ('Site', {'fields': ['latitude', 'longitude', 'sunrise', 'sunset', 'contact_no']}),
         ('Pins', {'fields': ['infrared', 'pwm', 'filter_a', 'filter_b', 'motion_1', 'motion_2', 'pin_4g']}),
-        ('Intervals', {'fields': ['update_after', 'video_interval', 'rest_interval', 'motion_interval', 'idol_4g_interval']}),
+        ('Intervals',
+         {'fields': ['update_after', 'video_interval', 'rest_interval', 'motion_interval', 'idol_4g_interval']}),
     ]
 
     def turn_logging_on(self, request, queryset):
@@ -71,11 +74,14 @@ class ImageAdmin(admin.ModelAdmin):
 
     def link_to_actions(self, obj):
         if obj.processed:
-            return format_html('<a href="{}" target="_blank">Reprocess</a>', reverse("core:core-api:image-process", args=[obj.id]))
-        return format_html('<a href="{}" target="_blank">Process</a>', reverse("core:core-api:image-process", args=[obj.id]))
+            return format_html('<a href="{}" target="_blank">Reprocess</a>',
+                               reverse("core:core-api:image-process", args=[obj.id]))
+        return format_html('<a href="{}" target="_blank">Process</a>',
+                           reverse("core:core-api:image-process", args=[obj.id]))
 
     def box_view(self, obj):
-        return format_html(f'<a href={reverse("core:core-api:image-boxview", args=[obj.id])} target="_blank">BoxView</a>')
+        return format_html(
+            f'<a href={reverse("core:core-api:image-boxview", args=[obj.id])} target="_blank">BoxView</a>')
 
 
 class EventAdmin(admin.ModelAdmin):
@@ -117,10 +123,14 @@ class LogAdmin(ExportActionMixin, admin.ModelAdmin):
 
     logged_at_sec.short_description = 'Logged At'
 
+
 class PTZCameraPresetAdmin(admin.ModelAdmin):
-    list_display = ('camera_id', 'name', 'zoom_min', 'zoom_max', 'zoom_default', 'pan_min', 'pan_max', 'pan_default', 'tilt_min', 'tilt_max', 'tilt_default','description')
+    list_display = (
+    'camera_id', 'name', 'zoom_min', 'zoom_max', 'zoom_default', 'pan_min', 'pan_max', 'pan_default', 'tilt_min',
+    'tilt_max', 'tilt_default', 'description')
     list_filter = ('camera_id', 'name')
     search_fields = ('camera_id', 'name')
+
 
 class EventCountAdmin(admin.ModelAdmin):
     list_display = (
@@ -131,19 +141,21 @@ class EventCountAdmin(admin.ModelAdmin):
     list_filter = ('camera',)
     search_fields = ('camera__id', 'camera__description')
 
+
 class WeatherDataAdmin(admin.ModelAdmin):
     list_display = ('camera_id', 'air_temp', 'air_humidity', 'timestamp')
-    list_filter = ('camera_id',  'timestamp')
-    search_fields = ('camera_id',  'timestamp')
+    list_filter = ('camera_id', 'timestamp')
+    search_fields = ('camera_id', 'timestamp')
+
 
 admin.site.register(Camera, CameraAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(Event, EventAdmin)
-admin.site.register(EventCount,EventCountAdmin)
+admin.site.register(EventCount, EventCountAdmin)
 admin.site.register(Specie, SpecieAdmin)
 admin.site.register(BoundingBox, BoundingBoxAdmin)
 admin.site.register(Log, LogAdmin)
 admin.site.register(Tower, TowerAdmin)
 admin.site.register(Sensor, SensorAdmin)
 admin.site.register(PTZCameraPreset, PTZCameraPresetAdmin)
-admin.register(WeatherData, WeatherDataAdmin)
+admin.site.register(WeatherData, WeatherDataAdmin)
