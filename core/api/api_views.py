@@ -16,6 +16,7 @@ from django.core.files import File
 from django.db import IntegrityError
 from django.db.models import Count
 from django.http import HttpResponse
+from django.utils.dateparse import parse_datetime
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters.widgets import CSVWidget
@@ -30,8 +31,9 @@ from rest_framework.response import Response
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer, \
-    PTZCameraPresetSerializer, EventCountSerializer
-from core.models import BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset, EventCount
+    PTZCameraPresetSerializer, EventCountSerializer, WeatherDataSerializer
+from core.models import (BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset, EventCount,
+                         WeatherData)
 from core.notifications import send_push_notification
 
 
@@ -58,8 +60,10 @@ class ImageFilterSet(filters.FilterSet):
 class EventFilterSet(filters.FilterSet):
     date_gte = django_filters.DateFilter(field_name="date", lookup_expr='gte')
     date_lte = django_filters.DateFilter(field_name="date", lookup_expr='lte')
-    cameras = django_filters.ModelMultipleChoiceFilter(field_name="camera", widget=CSVWidget, queryset=Camera.objects.all())
-    species = django_filters.ModelMultipleChoiceFilter(field_name="species", widget=CSVWidget, queryset=Specie.objects.all())
+    cameras = django_filters.ModelMultipleChoiceFilter(field_name="camera", widget=CSVWidget,
+                                                       queryset=Camera.objects.all())
+    species = django_filters.ModelMultipleChoiceFilter(field_name="species", widget=CSVWidget,
+                                                       queryset=Specie.objects.all())
     status = django_filters.ChoiceFilter(choices=Event.STATUS)
 
     class Meta:
@@ -241,7 +245,8 @@ class BoxViewSet(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False)
     def linechart(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        stats = queryset.values('specie', 'image__date__date').annotate(count=Count('image__date__date')).order_by('image__date__date').values('specie', 'image__date__date', 'count')
+        stats = queryset.values('specie', 'image__date__date').annotate(count=Count('image__date__date')).order_by(
+            'image__date__date').values('specie', 'image__date__date', 'count')
 
         # date_range = self.date_range()
         date_range = sorted(list({str(stat['image__date__date']) for stat in stats}))
@@ -366,6 +371,7 @@ class CameraViewSet(viewsets.ModelViewSet):
         client.disconnect()
         client.loop_stop()
         return Response(json.dumps({"data": self.res}))
+
     @action(methods=['POST'], detail=False)
     def live_update(self, request, *args, **kwargs):
         cam_id = request.POST['cam_id']
@@ -376,6 +382,7 @@ class CameraViewSet(viewsets.ModelViewSet):
             fs.delete(f'cam_{cam_id}_live_image')
         fs.save(f'cam_{cam_id}_live_image', live_image)
         return Response({'message': f'live image updated for camera {cam_id}'}, status=status.HTTP_200_OK)
+
 
 class EventCountViewSet(viewsets.ModelViewSet):
     queryset = EventCount.objects.all()
@@ -403,10 +410,13 @@ class EventCountViewSet(viewsets.ModelViewSet):
         event_count_instance.save()
 
         return Response({'message': 'Deleted events and updated EventCount'}, status=status.HTTP_200_OK)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'message': 'EventCount deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
 class OrganizationViewSet(generics.RetrieveAPIView):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
@@ -459,3 +469,31 @@ class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
         return queryset
 
 
+class WeatherDataAPIView(viewsets.ModelViewSet):
+    queryset = WeatherData.objects.all()
+    serializer_class = WeatherDataSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Get the query parameters
+        camera_id = self.request.query_params.get('camera_id')
+        start_time = self.request.query_params.get('start_time')
+        end_time = self.request.query_params.get('end_time')
+
+        # Filter by camera_id if provided
+        if camera_id is not None:
+            queryset = queryset.filter(camera_id=camera_id)
+
+        # Filter by start_time and end_time if provided
+        if start_time:
+            start_time = parse_datetime(start_time)  # Convert to datetime object
+            if start_time:
+                queryset = queryset.filter(timestamp__gte=start_time)
+
+        if end_time:
+            end_time = parse_datetime(end_time)  # Convert to datetime object
+            if end_time:
+                queryset = queryset.filter(timestamp__lte=end_time)
+
+        return queryset

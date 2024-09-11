@@ -508,3 +508,13 @@ class PTZCameraPreset(models.Model):
 
     def __str__(self):
         return f"{self.camera_id} - {self.name}"
+
+
+class WeatherData(models.Model):
+    camera_id = models.IntegerField()
+    air_temp = models.FloatField(null=True, blank=True)
+    air_humidity = models.FloatField(null=True, blank=True)
+    timestamp = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Camera {self.camera_id} - {self.timestamp}"

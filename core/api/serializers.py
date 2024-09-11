@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import Organization
 from core.models import BoundingBox, Image, Specie, Camera, Slot, Reading, Log, Event, Tower, Sensor, PTZCameraPreset, \
-    EventCount
+    EventCount, WeatherData
 
 
 class SpecieSerializer(serializers.ModelSerializer):
@@ -144,4 +144,11 @@ class LogSerializer(serializers.ModelSerializer):
 class PTZCameraPresetSerializer(serializers.ModelSerializer):
     class Meta:
         model = PTZCameraPreset
+        fields = '__all__'
+
+
+class WeatherDataSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = WeatherData
         fields = '__all__'

@@ -4,8 +4,8 @@ from django.urls import reverse
 from import_export.admin import ExportActionMixin
 from django.utils.timezone import localtime
 from core.filters import SpecieFilter, CameraFilter
-from core.models import Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset, \
-    EventCount
+from core.models import (Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset,
+                         WeatherData, EventCount)
 
 
 class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
@@ -131,6 +131,10 @@ class EventCountAdmin(admin.ModelAdmin):
     list_filter = ('camera',)
     search_fields = ('camera__id', 'camera__description')
 
+class WeatherDataAdmin(admin.ModelAdmin):
+    list_display = ('camera_id', 'air_temp', 'air_humidity', 'timestamp')
+    list_filter = ('camera_id',  'timestamp')
+    search_fields = ('camera_id',  'timestamp')
 
 admin.site.register(Camera, CameraAdmin)
 admin.site.register(Image, ImageAdmin)
@@ -142,5 +146,4 @@ admin.site.register(Log, LogAdmin)
 admin.site.register(Tower, TowerAdmin)
 admin.site.register(Sensor, SensorAdmin)
 admin.site.register(PTZCameraPreset, PTZCameraPresetAdmin)
-
-
+admin.register(WeatherData, WeatherDataAdmin)
