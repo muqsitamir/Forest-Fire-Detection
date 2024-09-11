@@ -472,7 +472,7 @@ class PTZCameraPresetDetailAPIView(viewsets.ModelViewSet):
 class WeatherDataAPIView(viewsets.ModelViewSet):
     queryset = WeatherData.objects.all()
     serializer_class = WeatherDataSerializer
-
+    pagination_class = DynamicPagination
     def get_queryset(self):
         queryset = super().get_queryset()
 
