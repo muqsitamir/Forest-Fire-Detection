@@ -42,7 +42,11 @@ class Command(BaseCommand):
         events = Event.objects.filter(
                 camera__id=options['camera_id'], date__lte=datetime.date(int(options['year']), int(options['month']), int(options['date']))).exclude(Q(species="fire") | Q(species="smoke"))
         count = events.count()
+        events = events.exclude(status="FEATURED")
+        message = events.count()
+
         if options['delete']:
             events.delete()
             message = f"Deleted {count}"
+
         print(f'{message} false events before {options["date"]} - {options["month"]} - {options["year"]} for camera_id {options["camera_id"]}')

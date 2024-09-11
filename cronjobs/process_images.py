@@ -24,7 +24,7 @@ class ProcessImagesCronJob(CronJobBase):
                 ('file', (filename, open(f'{settings.BASE_DIR}/media/{image.file.name}', 'rb'), 'image/png'))
             ]
             try:
-                boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files).text)
+                boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files, timeout=15).text)
             except Exception as e:
                 log = True
                 boxes = []
