@@ -81,6 +81,11 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
+        uuid = self.request.query_params.get('uuid')
+
+        # Filter by UUID if provided
+        if uuid:
+            qs = qs.filter(uuid=uuid)
         # Get date range from filter parameters
         if not self.request.user.is_superuser:
             # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
@@ -391,13 +396,7 @@ class EventCountViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Assuming you have a request parameter 'camera_id' that specifies the camera ID
         camera_id = self.request.query_params.get('camera')
-        uuid = self.request.query_params.get('uuid')
-        #camera_id = self.request.query_params.get('camera')
-
-        # Filter by UUID if it's present
-        if uuid:
-            return EventCount.objects.filter(event__uuid=uuid)
-        elif camera_id:
+        if camera_id:
             return EventCount.objects.filter(camera=camera_id)
         else:
             return EventCount.objects.all()
