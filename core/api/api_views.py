@@ -81,11 +81,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
-        uuid = self.request.query_params.get('uuid')
 
-        # Filter by UUID if provided
-        if uuid:
-            qs = qs.filter(uuid=uuid)
         # Get date range from filter parameters
         if not self.request.user.is_superuser:
             # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
