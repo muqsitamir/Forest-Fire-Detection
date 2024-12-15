@@ -487,18 +487,26 @@ class WeatherDataAPIView(viewsets.ModelViewSet):
         end_time = self.request.query_params.get('end_time')
 
         # Filter by camera_id if provided
-        if camera_id is not None:
+        if camera_id:
             queryset = queryset.filter(camera_id=camera_id)
 
-        # Filter by start_time and end_time if provided
+        # Convert start_time from Unix timestamp (milliseconds) to datetime
         if start_time:
-            start_time = parse_datetime(start_time)  # Convert to datetime object
-            if start_time:
+            try:
+                start_time = datetime.fromtimestamp(int(start_time) / 1000)
                 queryset = queryset.filter(timestamp__gte=start_time)
+            except (ValueError, TypeError):
+                # Handle invalid start_time values
+                pass
 
+        # Convert end_time from Unix timestamp (milliseconds) to datetime
         if end_time:
-            end_time = parse_datetime(end_time)  # Convert to datetime object
-            if end_time:
+            try:
+                end_time = datetime.fromtimestamp(int(end_time) / 1000)
                 queryset = queryset.filter(timestamp__lte=end_time)
+            except (ValueError, TypeError):
+                # Handle invalid end_time values
+                pass
 
-        return queryset
+        # Add default ordering
+        return queryset.order_by('timestamp')
