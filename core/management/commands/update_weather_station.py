@@ -37,7 +37,7 @@ class Command(BaseCommand):
                 url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
                 headers = {
                     "Content-Type": "application/json",
-                    "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjUxMmU4MWI5LTdjMDctNGFiNy05YWEyLTMzMDhjYzMxYTlhZSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE3NTMwNzA4LCJleHAiOjE3MTgxMzU0MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.ZdJtV-8sTqYwAcbPFu966QHinT3h_jEWvxSOjF_HUzYsLO9geKnBrYko-k_AH8MkmCABYTnLMtVQwbon-4qHDg"}
+                    "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6ImYxNzA0NTJkLThlMTYtNDgwZC1hOWU4LTI4NzgyZGY5YmJiMiIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzM0Mjk0NjQ2LCJleHAiOjE3NDIwNzA2NDYsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0._7a63CodyjvcMzqsZquypEw6r4iLSbr1AYASqc2Ouk_EqziCOQqw8fcrR1U69jLjsEw2Q8qNECT2_OAYIW-2Eg"}
                 try:
                     response = requests.get(url, headers=headers)
                     if response.status_code == 200:
