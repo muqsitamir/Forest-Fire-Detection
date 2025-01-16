@@ -220,7 +220,6 @@ class EventCount(models.Model):
         return f"EventCount for Camera {self.camera.id}"
 
 
-
 class Event(models.Model):
     FEATURED = "FEATURED"
     ARCHIVED = "ARCHIVED"
@@ -285,8 +284,8 @@ class Event(models.Model):
             day_event_with_more_than_one_species = event_count.day_event_with_more_than_one_species
             created_at = event.created_at
             print(created_at)
-            is_night = created_at.time().hour >=18 or created_at.time().hour <= 6
-             # Retrieve all related species objects
+            is_night = created_at.time().hour >= 18 or created_at.time().hour <= 6
+            # Retrieve all related species objects
             species_list = event.species.all()
             print(species_list.count())
             for species in species_list:
@@ -297,7 +296,6 @@ class Event(models.Model):
                 total_night_event_count += 1
                 if has_more_than_one_species:
                     night_event_with_more_than_one_species += 1
-
 
                 # Check each species in the event
                 for species in species_list:
@@ -341,6 +339,7 @@ class Event(models.Model):
         print("Smoke day events:", smoke_day_event_count)
 
         event_count.save()
+
     def check_weather_station_api(self):
         current_time = timezone.now()
         print(self.created_at)
@@ -362,7 +361,7 @@ class Event(models.Model):
             url = f"{base_url}{device_id}/values/timeseries?keys={keys}{ts_params}"
             headers = {
                 "Content-Type": "application/json",
-                "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6IjUxMmU4MWI5LTdjMDctNGFiNy05YWEyLTMzMDhjYzMxYTlhZSIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzE3NTMwNzA4LCJleHAiOjE3MTgxMzU0MDgsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0.ZdJtV-8sTqYwAcbPFu966QHinT3h_jEWvxSOjF_HUzYsLO9geKnBrYko-k_AH8MkmCABYTnLMtVQwbon-4qHDg"
+                "X-Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtdWhhbW1hZF93YXFhckBsdW1zLmVkdS5wayIsInVzZXJJZCI6ImNmMTgzMTYwLWYzNzAtMTFlZS05Mzc4LTIxNTVjZjA1NzBmOCIsInNjb3BlcyI6WyJDVVNUT01FUl9VU0VSIl0sInNlc3Npb25JZCI6ImYxNzA0NTJkLThlMTYtNDgwZC1hOWU4LTI4NzgyZGY5YmJiMiIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzM0Mjk0NjQ2LCJleHAiOjE3NDIwNzA2NDYsImZpcnN0TmFtZSI6Ik11aGFtbWFkIiwibGFzdE5hbWUiOiJXYXFhciIsImVuYWJsZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI2YWFmMzZlMC0yZDUyLTExZWUtODM0OC0yMzc4NjQ5MWJkY2IiLCJjdXN0b21lcklkIjoiMjE1YTU1ZjAtODIzNS0xMWVlLWI2ZWEtOWQ2MDkwMzkwZjFiIn0._7a63CodyjvcMzqsZquypEw6r4iLSbr1AYASqc2Ouk_EqziCOQqw8fcrR1U69jLjsEw2Q8qNECT2_OAYIW-2Eg",
             }
             print(url)
             try:
