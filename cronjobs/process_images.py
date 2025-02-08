@@ -25,11 +25,14 @@ class ProcessImagesCronJob(CronJobBase):
             ]
             try:
                 boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files, timeout=15).text)
+                boxes = json.loads(boxes['predictions'])
             except Exception as e:
                 log = True
                 boxes = []
             index = 0
             for box in boxes:
+                if box == 'No Fire detected':
+                    continue
                 box_dict = {
                     'y': box['ymin'],
                     'x': box['xmin'],
