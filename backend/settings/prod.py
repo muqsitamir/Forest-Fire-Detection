@@ -228,7 +228,7 @@ WEBPACK_LOADER = {
     }
 }
 
-MODEL_SERVICE_URL = 'http://203.135.63.37:5000'
+MODEL_SERVICE_URL = 'http://203.135.63.37:50001'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
