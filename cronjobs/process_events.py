@@ -1,10 +1,8 @@
 import os
-
 import cv2
 import imageio
 import requests
 from django.utils import timezone
-
 from django.conf import settings
 from django.core.files import File
 from django_cron import CronJobBase, Schedule

@@ -18,7 +18,7 @@ class ProcessImagesCronJob(CronJobBase):
 
     def do(self):
         log = False
-        for image in Image.objects.filter(processed=False, included=False):
+        for image in Image.objects.filter(processed=False, included=False, event__uuid="389fbdf2-0659-4bae-a123-7299c828b212"):
             filename = os.path.basename(image.file.name)
             files = [
                 ('file', (filename, open(f'{settings.BASE_DIR}/media/{image.file.name}', 'rb'), 'image/png'))
@@ -28,6 +28,7 @@ class ProcessImagesCronJob(CronJobBase):
                 boxes = json.loads(boxes['predictions'])
             except Exception as e:
                 log = True
+                error_message = str(e)
                 boxes = []
             index = 0
             for box in boxes:
@@ -52,5 +53,5 @@ class ProcessImagesCronJob(CronJobBase):
             image.processed = True
             image.save()
         if log:
-            Log(message="Couldn't Process Frame, Check If Mega Detector is Online", camera=image.camera,
+            Log(message=f"Couldn't Process Frame, Error: {error_message}", camera=image.camera,
                 logged_at=timezone.now(), script=Log.OTHERS, activity=Log.DETECTOR_FAULT).save()
