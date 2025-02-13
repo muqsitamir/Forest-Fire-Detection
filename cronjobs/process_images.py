@@ -18,22 +18,23 @@ class ProcessImagesCronJob(CronJobBase):
 
     def do(self):
         log = False
-        for image in Image.objects.filter(processed=False, included=False, event__uuid="389fbdf2-0659-4bae-a123-7299c828b212"):
+        for image in Image.objects.filter(processed=False, included=False):
             filename = os.path.basename(image.file.name)
             files = [
                 ('file', (filename, open(f'{settings.BASE_DIR}/media/{image.file.name}', 'rb'), 'image/png'))
             ]
             try:
                 boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files, timeout=15).text)
-                boxes = json.loads(boxes['predictions'])
+                if len(boxes) > 2:
+                    boxes = boxes['predictions']
+                else:
+                    boxes = []
             except Exception as e:
                 log = True
                 error_message = str(e)
                 boxes = []
             index = 0
             for box in boxes:
-                if box == 'No Fire detected':
-                    continue
                 box_dict = {
                     'y': box['ymin'],
                     'x': box['xmin'],
