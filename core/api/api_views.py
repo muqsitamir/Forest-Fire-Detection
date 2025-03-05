@@ -129,8 +129,15 @@ class EventViewSet(viewsets.ModelViewSet):
     def delete_events(self, request, *args, **kwargs):
         events = request.data.get('events', [])
         events = Event.objects.filter(uuid__in=events)
+        print(events)
+        total_events = events.count()
+        events = events.exclude(status='FEATURED')
+        featured_events = total_events - events.count()
+        message = f"Deleted {events.count()} events"
+        if featured_events > 0:
+            message = f'Deleted {events.count()} events excluding {featured_events} featured events'
         events.delete()
-        return Response({'message': 'Deleted events'}, status=status.HTTP_200_OK)
+        return Response({'message': message}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=True)
     def notify(self, request, *args, **kwargs):
@@ -400,21 +407,6 @@ class EventCountViewSet(viewsets.ModelViewSet):
             return EventCount.objects.filter(camera=camera_id)
         else:
             return EventCount.objects.all()
-
-    @action(methods=['POST'], detail=False)
-    def delete_events(self, request, *args, **kwargs):
-        events = request.data.get('events', [])
-        events = Event.objects.filter(uuid__in=events)
-        events.delete()
-
-        # Update EventCount after deletion
-        updated_event_count = Event.objects.count()
-        event_count_instance, _ = EventCount.objects.get_or_create(
-            id=1)  # Assuming there's only one instance of EventCount
-        event_count_instance.count = updated_event_count
-        event_count_instance.save()
-
-        return Response({'message': 'Deleted events and updated EventCount'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

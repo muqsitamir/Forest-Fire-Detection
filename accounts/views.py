@@ -30,7 +30,6 @@ def signup(request):
     return render(request, 'registration/signup.html', {'form': form})
 
 
-
 @api_view(['POST'])
 def send_reset_password_email(request):
     email = request.data.get('email')
