@@ -1,4 +1,4 @@
-from django.urls import path, get_resolver
+from django.urls import path
 from rest_framework import routers
 from accounts.views import send_reset_password_email, reset_password_confirm
 

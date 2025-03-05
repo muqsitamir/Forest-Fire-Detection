@@ -27,7 +27,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['172.105.61.72', 'api.forestwatch.org.pk', "*"]
 
 ALLOWED_HOSTS += ['127.0.0.1', '192.168.0.12', "139.162.11.234"]
-# Application definition
 
 DEFAULT_APPS = [
     'django.contrib.admin',
