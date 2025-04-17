@@ -1,13 +1,11 @@
 import os
 from datetime import datetime, timedelta
 from time import sleep
-from django.utils import timezone
 import json
 import paho.mqtt.client as mqtt
 import certifi
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
-import http.client
 import django_filters
 import imageio
 import cv2
@@ -16,7 +14,6 @@ from django.core.files import File
 from django.db import IntegrityError
 from django.db.models import Count
 from django.http import HttpResponse
-from django.utils.dateparse import parse_datetime
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters.widgets import CSVWidget
@@ -81,18 +78,89 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
-        uuid = self.request.query_params.get('uuid')
 
-        # Filter by UUID if provided
-        if uuid:
-            qs = qs.filter(uuid=uuid)
-        # Get date range from filter parameters
         if not self.request.user.is_superuser:
-            # qs = qs.annotate(num_species=Count('species')).filter(num_species__gt=0, camera__test=False)
-            qs = qs.filter(Q(species="vehicle") | Q(species="animal") | Q(species="person")).filter(
+            qs = qs.filter(Q(species="smoke") | Q(species="fire")).filter(
                 camera__test=False).distinct()
 
         return qs.order_by('-date')
+
+    @action(methods=['GET'], detail=False)
+    def piechart(self, request, *args, **kwargs):
+        if request.query_params.get("species") == '' or request.query_params.get("species") is None:
+            species = Specie.objects.all()
+        else:
+            species = Specie.objects.filter(id__in=request.query_params.get("species").split(','))
+
+
+        if request.query_params.get('image__date__gte') != '':
+            if request.query_params.get('cameras') == '' or request.query_params.get('cameras') is None:
+                stats = species.annotate(
+                    count=Count(
+                        'event',
+                        filter=Q(event__date__gte=request.query_params.get('image__date__gte')) &
+                               Q(event__date__lte=request.query_params.get('image__date__lte'))
+                    )
+                ).values('name', 'color', 'count')
+            else:
+                stats = species.annotate(
+                    count=Count(
+                        'event',
+                        filter=Q(event__date__gte=request.query_params.get('image__date__gte')) &
+                               Q(event__date__lte=request.query_params.get('image__date__lte')) &
+                               Q(event__camera__in=request.query_params.get('cameras').split(','))
+                    )
+                ).values('name', 'color', 'count')
+        else:
+            if request.query_params.get('cameras') == '':
+                stats = species.annotate(count=Count('event')).values('name', 'color', 'count')
+            else:
+                stats = species.annotate(count=Count('event', filter=Q(
+                    event__camera__in=request.query_params.get('cameras').split(',')))
+                                         ).values('name', 'color', 'count')
+
+
+        pie = {
+            'labels': [c['name'] for c in stats],
+            'data': [c['count'] for c in stats],
+            'colors': [c['color'] for c in stats],
+        }
+
+        return Response(pie)
+
+    @action(methods=['GET'], detail=False)
+    def linechart(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        stats = queryset.values('species', 'date__date').annotate(count=Count('date__date')).order_by(
+            'date__date').values('species', 'date__date', 'count')
+
+        date_range = sorted(list({str(stat['date__date']) for stat in stats}))
+        chart = {}
+
+        for specie in Specie.objects.all().values('id', 'name', 'color'):
+            counts = [self.stat(specie['id'], date, stats) for date in date_range]
+
+            if not any(counts):
+                continue
+
+            chart[specie['id']] = {
+                'label': specie['name'],
+                'data': counts,
+                'backgroundColor': specie['color'],
+                'borderColor': specie['color'],
+            }
+
+            if specie['id'] == 'vehicle':
+                chart['vehicle']['yAxisID'] = "y1"
+
+        return Response({'datasets': chart.values(), 'labels': date_range})
+
+    def stat(self, specie, date, stats):
+        for stat in stats:
+            if stat['species'] == specie and str(stat['date__date']) == date:
+                return stat['count']
+        return 0
 
     @action(methods=['POST'], detail=False)
     def batch_update(self, request, *args, **kwargs):
@@ -143,7 +211,6 @@ class EventViewSet(viewsets.ModelViewSet):
     def notify(self, request, *args, **kwargs):
         event = self.get_object()
         send_push_notification(event)
-        # message = send_sms("+923009658434", event)
         return Response(event.uuid, status=200)
 
     @action(methods=['GET'], detail=True)
