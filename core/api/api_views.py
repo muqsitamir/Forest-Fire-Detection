@@ -389,7 +389,10 @@ class CameraViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return self.queryset
-        return self.queryset.filter(organization=self.request.user.organization)
+        return self.queryset.filter(
+            id__in=list(Permission.objects.filter(user=self.request.user, type="view").first()
+                        .cameras.all().values_list('id', flat=True))
+        )
 
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
