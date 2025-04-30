@@ -433,6 +433,27 @@ class Event(models.Model):
         EventCount.update_event_counts(camera_id)
 
 
+class Permission(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='permissions')
+    cameras = models.ManyToManyField(Camera, related_name='permissions')
+    type = models.CharField(
+        max_length=20,
+        choices=[
+            ('view', 'View'),
+            ('annotate', 'Annotate'),
+            ('delete', 'Delete'),
+        ]
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'type'], name='unique_user_type')
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.type}"
+
+
 class Log(models.Model):
     OTHERS = "OTHERS"
     SCRIPT = [
