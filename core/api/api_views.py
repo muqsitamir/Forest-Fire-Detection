@@ -44,6 +44,12 @@ class TowerViewSet(viewsets.ModelViewSet):
     queryset = Tower.objects.all()
     serializer_class = TowerSerializer
 
+    def get_queryset(self):
+        return self.queryset.filter(
+            id__in=set(list(Permission.objects.filter(user=self.request.user, type="view").first()
+                        .cameras.all().values_list('tower', flat=True)))
+        )
+
 
 class ImageFilterSet(filters.FilterSet):
     date_gte = django_filters.DateFilter(field_name="date", lookup_expr='gte')
