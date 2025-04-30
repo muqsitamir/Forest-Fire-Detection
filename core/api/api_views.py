@@ -30,7 +30,7 @@ from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerialize
     ReadingSerializer, LogSerializer, EventSerializer, OrganizationSerializer, TowerSerializer, \
     PTZCameraPresetSerializer, EventCountSerializer, WeatherDataSerializer
 from core.models import (BoundingBox, Image, Specie, Camera, Reading, Log, Event, Tower, PTZCameraPreset, EventCount,
-                         WeatherData)
+                         WeatherData, Permission)
 from core.notifications import send_push_notification
 
 
@@ -82,6 +82,12 @@ class EventViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_superuser:
             qs = qs.filter(Q(species="smoke") | Q(species="fire")).filter(
                 camera__test=False).distinct()
+
+        qs = qs.filter(
+            camera_id__in=list(
+                Permission.objects.filter(user=self.request.user, type="view").first()
+                .cameras.all().values_list('id', flat=True))
+        ).distinct()
 
         return qs.order_by('-date')
 

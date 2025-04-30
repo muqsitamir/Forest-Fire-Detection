@@ -5,7 +5,7 @@ from import_export.admin import ExportActionMixin
 from django.utils.timezone import localtime
 from core.filters import SpecieFilter, CameraFilter
 from core.models import (Specie, Camera, Image, BoundingBox, Slot, Event, Log, DontCare, Tower, Sensor, PTZCameraPreset,
-                         WeatherData, EventCount)
+                         WeatherData, EventCount, Permission)
 
 
 class SpecieAdmin(ExportActionMixin, admin.ModelAdmin):
@@ -114,6 +114,12 @@ class BoundingBoxAdmin(admin.ModelAdmin):
         return obj.image.id
 
 
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'type')
+    search_fields = ('user', 'type')
+    list_filter = ('user', 'type')
+
+
 class LogAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('message', 'activity', 'logged_at_sec', 'script', 'camera')
     list_filter = (CameraFilter, 'activity', 'script')
@@ -159,3 +165,4 @@ admin.site.register(Tower, TowerAdmin)
 admin.site.register(Sensor, SensorAdmin)
 admin.site.register(PTZCameraPreset, PTZCameraPresetAdmin)
 admin.site.register(WeatherData, WeatherDataAdmin)
+admin.site.register(Permission, PermissionAdmin)
