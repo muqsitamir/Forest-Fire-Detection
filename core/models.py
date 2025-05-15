@@ -272,7 +272,7 @@ class Event(models.Model):
     def update_event_counts(self):
         event_count, created = EventCount.objects.get_or_create(camera=self.camera)
         try:
-            event = Event.objects.filter(camera=self.camera).latest('created_at')
+            event = Event.objects.filter(camera=self.camera).first()
             total_event_count = event_count.total_event_count
             total_night_event_count = event_count.total_night_event_count
             total_day_event_count = event_count.total_day_event_count
@@ -282,39 +282,42 @@ class Event(models.Model):
             smoke_day_event_count = event_count.smoke_day_event_count
             night_event_with_more_than_one_species = event_count.night_event_with_more_than_one_species
             day_event_with_more_than_one_species = event_count.day_event_with_more_than_one_species
-            created_at = event.created_at
-            print(created_at)
-            is_night = created_at.time().hour >= 18 or created_at.time().hour <= 6
-            # Retrieve all related species objects
-            species_list = event.species.all()
-            print(species_list.count())
-            for species in species_list:
-                print(species.id)
-            has_more_than_one_species = species_list.count() > 1
-
-            if is_night:
-                total_night_event_count += 1
-                if has_more_than_one_species:
-                    night_event_with_more_than_one_species += 1
-
-                # Check each species in the event
+            if event:
+                created_at = event.created_at
+                print(created_at)
+                is_night = created_at.time().hour >= 18 or created_at.time().hour <= 6
+                # Retrieve all related species objects
+                species_list = event.species.all()
+                print(species_list.count())
                 for species in species_list:
                     print(species.id)
-                    if species.id == 'fire':
-                        fire_night_event_count += 1
-                    if species.id == 'smoke':
-                        smoke_night_event_count += 1
-            else:
-                total_day_event_count += 1
-                if has_more_than_one_species:
-                    day_event_with_more_than_one_species += 1
+                has_more_than_one_species = species_list.count() > 1
 
-                # Check each species in the event
-                for species in species_list:
-                    if species.id == 'fire':
-                        fire_day_event_count += 1
-                    if species.id == 'smoke':
-                        smoke_day_event_count += 1
+                if is_night:
+                    total_night_event_count += 1
+                    if has_more_than_one_species:
+                        night_event_with_more_than_one_species += 1
+
+                    # Check each species in the event
+                    for species in species_list:
+                        print(species.id)
+                        if species.id == 'fire':
+                            fire_night_event_count += 1
+                        if species.id == 'smoke':
+                            smoke_night_event_count += 1
+                else:
+                    total_day_event_count += 1
+                    if has_more_than_one_species:
+                        day_event_with_more_than_one_species += 1
+
+                    # Check each species in the event
+                    for species in species_list:
+                        if species.id == 'fire':
+                            fire_day_event_count += 1
+                        if species.id == 'smoke':
+                            smoke_day_event_count += 1
+            else:
+                pass
         except Event.DoesNotExist:
             raise ValueError("Event with the specified UUID does not exist")
         total_event_count += 1
