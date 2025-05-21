@@ -85,7 +85,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
 
-        if not self.request.user.is_superuser:
+        if not self.request.user.is_superuser and self.request.user.username != 'punjabadmin':
             qs = qs.filter(Q(species="smoke") | Q(species="fire")).filter(
                 camera__test=False).distinct()
 
@@ -94,6 +94,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 Permission.objects.filter(user=self.request.user, type="view").first()
                 .cameras.all().values_list('id', flat=True))
         ).distinct()
+
 
         return qs.order_by('-date')
 
