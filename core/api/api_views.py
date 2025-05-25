@@ -34,6 +34,9 @@ from core.models import (BoundingBox, Image, Specie, Camera, Reading, Log, Event
 from core.notifications import send_push_notification
 
 
+class UnpaginatedPagination(PageNumberPagination):
+    page_size = 100
+
 class DynamicPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
@@ -85,16 +88,11 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
 
-        if not self.request.user.is_superuser and self.request.user.username != 'punjabadmin':
-            qs = qs.filter(Q(species="smoke") | Q(species="fire")).filter(
-                camera__test=False).distinct()
-
         qs = qs.filter(
             camera_id__in=list(
                 Permission.objects.filter(user=self.request.user, type="view").first()
                 .cameras.all().values_list('id', flat=True))
         ).distinct()
-
 
         return qs.order_by('-date')
 
@@ -386,6 +384,7 @@ class CameraViewSet(viewsets.ModelViewSet):
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = UnpaginatedPagination
     res = 0
 
     def get_object(self):
