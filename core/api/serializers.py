@@ -61,10 +61,17 @@ class SlotSerializer(serializers.ModelSerializer):
 class CameraSerializer(serializers.ModelSerializer):
     slots = SlotSerializer(many=True, read_only=True)
     last_captured_at = serializers.DateTimeField(read_only=True)
+    latest_event = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Camera
         fields = '__all__'
+
+    def get_latest_event(self, obj):
+        latest_event = Event.objects.filter(camera_id=obj.id).first()
+        if latest_event:
+            return latest_event.file.name
+        return None
 
 
 class SensorSerializer(serializers.ModelSerializer):
@@ -80,11 +87,6 @@ class TowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tower
         fields = ('id', 'name', 'lat', 'lng', 'cameras', 'sensors',)
-    #
-    # def get_fields(self):
-    #     fields = super(TowerSerializer, self).get_fields()
-    #     fields['cameras'] = CameraSerializer(many=True)
-    #     return fields
 
 
 class CameraListSerializer(serializers.ModelSerializer):
