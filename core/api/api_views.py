@@ -48,6 +48,8 @@ class TowerViewSet(viewsets.ModelViewSet):
     serializer_class = TowerSerializer
 
     def get_queryset(self):
+        if self.request.user.is_superuser:
+            return self.queryset
         return self.queryset.filter(
             id__in=set(list(Permission.objects.filter(user=self.request.user, type="view").first()
                         .cameras.all().values_list('tower', flat=True)))
@@ -88,11 +90,12 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = self.queryset.exclude(file='')
 
-        qs = qs.filter(
-            camera_id__in=list(
-                Permission.objects.filter(user=self.request.user, type="view").first()
-                .cameras.all().values_list('id', flat=True))
-        ).distinct()
+        if not self.request.user.is_superuser:
+            qs = qs.filter(
+                camera_id__in=list(
+                    Permission.objects.filter(user=self.request.user, type="view").first()
+                    .cameras.all().values_list('id', flat=True))
+            ).distinct()
 
         return qs.order_by('-date')
 
