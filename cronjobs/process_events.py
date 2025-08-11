@@ -1,12 +1,61 @@
+import json
 import os
 import cv2
 import imageio
 import requests
+from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from django.core.files import File
 from django_cron import CronJobBase, Schedule
 from core.models import Image, BoundingBox, Event, Log
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+
+def email_sender(event, **kwargs):
+    if event.species.filter(endangered=True).exists() and not event.sms_sent:
+        send_mail(
+            'Animal Detected',
+            f"Camera Node ({event.camera.description}) detected {', '.join(event.species.values_list('name', flat=True))}\nGo to the following link to see the generated event\n https://api.tpilums.org.pk{event.file.url}",
+            settings.EMAIL_HOST_USER,
+            ['islammuqsit7@gmail.com', 'murtazataj@gmail.com', 'muzammal0@gmail.com',
+             'zainulhassan540@gmail.com'],
+            fail_silently=False,
+        )
+        event.sms_sent = True
+
+def send_sms(event):
+    contact_numbers = {x.strip(): False for x in
+                       event.camera.contacts.split(",")} if not event.sms_sent_multiple else json.loads(
+        event.sms_sent_multiple)
+    for contact_number, sent in contact_numbers.items():
+        if not sent:
+            text = f"{event.camera.description} detected {', '.join(event.species.values_list('name', flat=True))}" \
+                   f": https://api.tpilums.org.pk{event.file.url}"
+
+            for i in range(2):
+                resp = requests.get(f'http://203.135.63.37:8004/', headers={'Content-Type': 'application/json'},
+                                    params={"number": contact_number, "text": text}, timeout=25)
+                if resp.status_code == 200:
+                    contact_numbers[contact_number] = True
+                    logger.info(f"Successfully sent notification to {contact_number}")
+                    break
+
+    event.sms_sent_multiple = json.dumps(contact_numbers)
+    event.save()
+    if any(contact_numbers.values()):
+        return True
+    else:
+        return False
+
+def sms_sender(event, **kwargs):
+    if event.species.filter(endangered=True).exists() and not event.sms_sent:
+        if event.camera.contacts and send_sms(event):
+            event.sms_sent = True
+            event.save()
 
 
 class ProcessEventsCronJob(CronJobBase):
@@ -60,18 +109,4 @@ class ProcessEventsCronJob(CronJobBase):
             os.remove(f'{settings.MEDIA_ROOT}/temp/{event.uuid}_thumb.gif')
             event.save()
             images_qs.update(included=True)
-            try:
-                self.sms_sender(event)
-            except Exception as e:
-                continue
-
-    def sms_sender(self, event, **kwargs):
-        if event.species.filter(endangered=True).exists() and not event.sms_sent:
-            if event.camera.contact_no and self.send_sms(event):
-                event.sms_sent = True
-
-    def send_sms(self, event):
-        text = f"{event.camera.description} detected {', '.join(event.species.values_list('name', flat=True))}" \
-               f": https://api.forestwatch.org.pk{event.file.url}"
-        resp = requests.get(f'http://203.135.63.37:8004/', headers={'Content-Type': 'application/json'}, params={"number": event.camera.contact_no, "text": text})
-        return True if resp.status_code == 200 else False
+            sms_sender(event)

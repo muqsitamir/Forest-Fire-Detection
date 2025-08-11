@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
-from fcm_django.models import FCMDevice
 from core import fields
 from core.storage import OverwriteStorage
 import requests
@@ -84,7 +83,7 @@ class Camera(models.Model):
     sunset = models.DateTimeField(null=True, blank=True)
     sunrise = models.DateTimeField(null=True, blank=True)
     contact_no = models.CharField(max_length=16, null=True, blank=True)
-
+    contacts = models.TextField(null=True, blank=True)
     # pins
     infrared = models.IntegerField(default=12)
     pwm = models.IntegerField(default=100)
@@ -239,6 +238,7 @@ class Event(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sms_sent = models.BooleanField(default=False)
+    sms_sent_multiple = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS, default=NONE)
     weather_data = models.JSONField(null=True, blank=True)
     nasa_tag = models.BooleanField(default=False)

@@ -48,7 +48,7 @@ class CameraAdmin(admin.ModelAdmin):
         ('Stats', {'fields': ['last_reported_at', 'remaining_storage']}),
         ('Capture Settings', {'fields': ['frames_per_sec', 'image_width', 'image_height', 'roi_mask']}),
         ('Thresholds', {'fields': ['day_threshold', 'night_threshold', 'iou_threshold', 'confidence_threshold']}),
-        ('Site', {'fields': ['latitude', 'longitude', 'sunrise', 'sunset', 'contact_no']}),
+        ('Site', {'fields': ['latitude', 'longitude', 'sunrise', 'sunset', 'contact_no', "contacts"]}),
         ('Pins', {'fields': ['infrared', 'pwm', 'filter_a', 'filter_b', 'motion_1', 'motion_2', 'pin_4g']}),
         ('Intervals',
          {'fields': ['update_after', 'video_interval', 'rest_interval', 'motion_interval', 'idol_4g_interval']}),
