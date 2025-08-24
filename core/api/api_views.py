@@ -4,6 +4,7 @@ from time import sleep
 import json
 import paho.mqtt.client as mqtt
 import certifi
+import requests
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
 import django_filters
@@ -24,6 +25,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from accounts.models import Organization
 from core.api.serializers import ImageSerializer, BoxSerializer, CameraSerializer, \
@@ -587,3 +589,30 @@ class WeatherDataAPIView(viewsets.ModelViewSet):
 
         # Add default ordering
         return queryset.order_by('timestamp')
+
+
+class SMStestViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        camera = Camera.objects.filter(id=request.query_params.get("camera_id")).first()
+        if not camera:
+            return Response({"error": "Camera not found"}, status=404)
+
+        if not camera.contacts:
+            return Response({"error": "No contacts found for camera"}, status=404)
+        contact_numbers = [x.strip() for x in camera.contacts.split(",") if x]
+
+        for contact_number in contact_numbers:
+            text = f"Testing sms api for camera: {camera.description}"
+            for i in range(2):
+                resp = requests.get(
+                    "http://203.135.63.37:8004/",
+                    headers={"Content-Type": "application/json"},
+                    params={"number": contact_number, "text": text},
+                    timeout=25,
+                )
+                if resp.status_code == 200:
+                    break
+
+        return Response({"status": "SMS sent"})
