@@ -594,8 +594,9 @@ class WeatherDataAPIView(viewsets.ModelViewSet):
 class SMStestViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def list(self, request):
+    def create(self, request):
         camera = Camera.objects.filter(id=request.query_params.get("camera_id")).first()
+        text = f"Testing sms api for camera: {camera.description}" if not request.data else request.data['text']
         if not camera:
             return Response({"error": "Camera not found"}, status=404)
 
@@ -604,7 +605,6 @@ class SMStestViewSet(viewsets.ViewSet):
         contact_numbers = [x.strip() for x in camera.contacts.split(",") if x]
 
         for contact_number in contact_numbers:
-            text = f"Testing sms api for camera: {camera.description}"
             for i in range(2):
                 resp = requests.get(
                     "http://203.135.63.37:8004/",
