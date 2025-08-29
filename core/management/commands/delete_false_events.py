@@ -32,7 +32,8 @@ class Command(BaseCommand):
         if events_in_latest_month.count() > 100:
             events = events.filter(date__lte=one_month_ago)
         else:
-            events = events[100:]
+            events_to_keep_ids = events[:100].values_list('id', flat=True)
+            events = events.exclude(id__in=list(events_to_keep_ids))
         message = events.count()
 
 
