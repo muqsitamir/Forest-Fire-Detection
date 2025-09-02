@@ -316,6 +316,17 @@ class ImageViewSet(viewsets.ModelViewSet):
         ret, image_data = cv2.imencode('.png', image_data)
         return HttpResponse(image_data.tobytes(), content_type="image/png")
 
+    # API to get images associated with certain events
+    @action(methods=['POST'], detail=False)
+    def get_links(self, request, *args, **kwargs):
+        results = {}
+        event_ids = json.loads(request.body.decode('utf-8'))
+        for id in event_ids:
+            results[id] = [x["file"] for x in list(Image.objects.filter(event=id).values("file"))]
+        return Response({'image_links': results}, status=status.HTTP_200_OK)
+
+
+
 
 class BoxViewSet(viewsets.ModelViewSet):
     serializer_class = BoxSerializer
