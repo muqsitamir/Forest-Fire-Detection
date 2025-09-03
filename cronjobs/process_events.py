@@ -34,7 +34,7 @@ def send_sms(event):
     for contact_number, sent in contact_numbers.items():
         if not sent:
             text = f"{event.camera.description} detected {', '.join(event.species.values_list('name', flat=True))}" \
-                   f": https://api.tpilums.org.pk{event.file.url}"
+                   f": https://api.forestwatch.org.pk{event.file.url}"
 
             for i in range(2):
                 resp = requests.get(f'http://203.135.63.37:8004/', headers={'Content-Type': 'application/json'},
