@@ -23,8 +23,9 @@ class ProcessImagesCronJob(CronJobBase):
             files = [
                 ('file', (filename, open(f'{settings.BASE_DIR}/media/{image.file.name}', 'rb'), 'image/png'))
             ]
+            payload = {"camera": image.event.camera.description, "event_id": image.event.uuid}
             try:
-                boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files, timeout=15).text)
+                boxes = json.loads(requests.post(settings.MODEL_SERVICE_URL, files=files, data=payload, timeout=15).text)
                 if len(boxes) > 2:
                     boxes = boxes['predictions']
                 else:
